@@ -22,15 +22,15 @@ Eligible participants for the program must meet one of the following criteria:
 2.	Device vibrates and displays: 
 "Health Check Required. Press button within 60 seconds."
 
-4.	If user presses button:
+3.	If user presses button:
 - Log event
 - Clear alert
 
-5.	Else if no response:
+4.	Else if no response:
 - Device sounds alarm
 - Send text message to designated contact
 
-6.	If still no response and high-risk pattern after additional timeout:
+5.	If still no response and high-risk pattern after additional timeout:
 - EMS dispatched
 - Connection to peer support specialist/behavioral services
 
