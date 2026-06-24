@@ -34,6 +34,15 @@ Eligible participants for the program must meet one of the following criteria:
 - EMS dispatched
 - Connection to peer support specialist/behavioral services
 
+## Principle of Operation
+
+The MAX30102 is an optical sensor that measures heart rate and oxygen saturation through the pulsing of blood from blood vessels after emitting two wavelengths of light. The module houses a red LED and an infrared (IR) LED, which are shined onto blood vessels through the skin, and the amount of reflected light is measured using a photodetector.
+
+As the heart beats, it pushes blood into the capillaries. This localized increase in blood volume absorbs more light. Between beats, less blood is present, allowing more light to bounce back to the sensor. The peaks of the resulting sinusoidal waveform are measured to determine the frequency of pulses and obtain heart rate.
+
+Oxygenated and deoxygenated blood absorb different ratios of red and IR light: oxygenated blood absorbs more infrared light, and deoxygenated blood absorbs more red light. The sensor alternates with shining the red and IR LEDs, and measures the absorption ratio of both wavelengths. By comparing the ratio of red and IR light absorbed by the photodetector, the sensor estimates the percentage of oxygenated blood in the blood vessels.
+
+
 ## Circuit Diagram
 
 <img width="975" height="414" alt="image" src="https://github.com/user-attachments/assets/7b568298-ab7e-44ae-a56a-6288bc93e31c" />
