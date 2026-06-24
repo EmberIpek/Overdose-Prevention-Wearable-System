@@ -88,9 +88,10 @@ Device address: 0x57
 Soldered pins onto Pi Pico board, will use Pico to send biometric data to Pi. Machine.I2C documentation read: [https://docs.micropython.org/en/latest/library/machine.I2C.html]
 Wired sensor and set up I2C communication on Pi Pico. Will use upython MAX30102 library.
 
+bash:
 ```bash 
->>> import mip
->>> mip.install("micropython-max30102")
+import mip
+mip.install("micropython-max30102")
 ```
 
 Updated schematic:
