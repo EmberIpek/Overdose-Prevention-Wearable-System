@@ -113,4 +113,26 @@ Mode configuration reg (0x09) starts in power down, must be set to 0x03 for SpO2
 
 To do: read MAX30102 upython documentation, set up polling for FIFO buffer reg (0x07)
 
+## 6/24/2026
+
+Initialized sensor to use MAX30102 library and added a loop to continuously read temperature. Pressing sensor against skin results in readings steadily increasing to body temperature, verifying operation.
+<img width="464" height="414" alt="image" src="https://github.com/user-attachments/assets/d1403b7e-9d56-4867-b6a0-80748bf2a82f" />
+
+MAX30102 micropython library is poorly documented and leads to unpredictable behavior. Will use direct access to registers instead. SpO2 config register (0x0A):
+<img width="975" height="155" alt="image" src="https://github.com/user-attachments/assets/430ef721-b813-4c2e-862c-1eb3f77ef096" />
+
+Bits 4:2 define sample rate, will use 400 samples/s
+<img width="975" height="285" alt="image" src="https://github.com/user-attachments/assets/a891848b-b9c8-4ceb-869d-853548af4382" />
+
+### Temperature registers: 
+
+Die Temp Integer: 0x1F [7:0]
+
+Die Temp Fraction: 0x20 [3:0]
+
+Die Temp Config: 0x21 [0]
+
+To do: read red and IR LED values, plot using matplotlib, pass through numpy butterworth low pass filter to filter out electrical jitter/high freq noise
+
+
 
