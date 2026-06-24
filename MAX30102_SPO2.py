@@ -17,5 +17,14 @@ SPO2_SCL = machine.Pin(5)
 i2c0 = machine.I2C(0, scl=SPO2_SCL, sda=SPO2_SDA, freq = 100000)
 i2c0.writeto_mem(SPO2_ADDR, SPO2_MODE_REG, bytearray([0x03]))
 
+sensor = MAX30102(i2c=i2c0)
+
 data = i2c0.readfrom_mem(SPO2_ADDR, SPO2_DEVID_REG, 1)
 print(data)
+
+while True:
+    # read the die temperature in Celsius
+    temperature_C = sensor.read_temperature()
+    print("Die temperature: ", temperature_C, "°C")
+    
+    utime.sleep(0.5)
