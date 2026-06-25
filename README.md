@@ -139,5 +139,20 @@ Die Temp Config: 0x21 [0]
 
 To do: read red and IR LED values, plot using matplotlib, pass through numpy butterworth low pass filter to filter out electrical jitter/high freq noise
 
+## 6/25/2026
+
+LED pulse width setter function created (register 0x0A bits 1:0). **Sample rate sets upper limit on pulse width time and ADC resolution is determined by pulse width:** 
+
+<img width="975" height="214" alt="image" src="https://github.com/user-attachments/assets/bccba845-543a-4934-9f07-6077e4e4dce9" />
+
+ 
+Helper function to set LED pulse amplitudes created (registers 0x0C and 0x0D). To tune pulse amplitude, check raw ADC values. IR signal should be ~20-80% ADC range. Function created to set ADC range (register 0x0A bits 6:5).
+
+Temperature data registers 0x1F-0x21:
+
+<img width="975" height="194" alt="image" src="https://github.com/user-attachments/assets/dd2a1748-fe63-4783-81bc-3bcd92cfc916" />
+
+ 
+Temperature integer value represented in big endian 2’s complement format. Fractional value incremented in multiples of 0.0625. Temperature config register bit 0 set to 1 to read temperature and is automatically cleared.
 
 
