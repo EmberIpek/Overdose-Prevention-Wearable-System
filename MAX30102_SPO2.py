@@ -1,3 +1,9 @@
+# Author: Ember Ipek
+#
+# This initializes an I2C bus for a MAX30102 sensor, puts it in SpO2 mode,
+# and gets a temperature reading every 0.5 seconds. Helper functions are
+# included to set SpO2 sample rate and pulse width.
+
 import machine
 import utime
 import network
@@ -26,27 +32,65 @@ def spo2_setup():
     
     return i2c, sensor
 
-# helper function to set SpO2 sample rate, bits 4:2 define sample rate
-# uses bit mask w/ bitwise AND to set bits 4:2, default 100Hz
-def set_spo2_sample_rate(i2c, rate=100):
+# helper function to set SpO2 pulse width, bits 1:0
+# set bits 1:0 with bitwise OR, default 118us
+def set_spo2_pulse_width(i2c, width=118):
+    """Sets SpO2 pulse width. Valid pulse widths: 69, 118, 215, 411
+    Determines ADC resolution (15 - 18 bits)
+    
+    Args:
+        i2c (machine.I2C object): I2C bus
+        width (integer): pulse width
+    """
     data = i2c.readfrom_mem(SPO2_ADDR, SPO2_CONFIG_REG, 1)[0]
     BITMASK = {
-        50: 0xE3,
-        100: 0xE7,
-        200: 0xEB,
-        400: 0xEF,
-        800: 0xF3,
-        1000: 0xF7,
-        1600: 0xFB,
-        3200: 0xFF
+        69: 0x00,
+        118: 0x01,
+        215: 0x02,
+        411: 0x03
         }
-    data &= BITMASK.get(rate, 0xE7)
+    
+    if BITMASK.get(width) is None:
+        raise ValueError("Invalid pulse width")
+    data |= BITMASK.get(width)
+    
+    i2c.writeto_mem(SPO2_ADDR, SPO2_CONFIG_REG, bytearray([data]))
+    
+    return
+
+# helper function to set SpO2 sample rate, bits 4:2 define sample rate
+# set bits 4:2 with bitwise OR, default 100Hz
+def set_spo2_sample_rate(i2c, rate=100):
+    """Sets SpO2 sample rate. Valid sample rates: 50, 100, 200, 400, 800,
+    1000, 1600, 3200
+    
+    Args:
+        i2c (machine.I2C object): I2C bus
+        rate (integer): sample rate
+    """
+    data = i2c.readfrom_mem(SPO2_ADDR, SPO2_CONFIG_REG, 1)[0]
+    BITMASK = {
+        50: 0x00,
+        100: 0x04,
+        200: 0x08,
+        400: 0x0C,
+        800: 0x10,
+        1000: 0x14,
+        1600: 0x18,
+        3200: 0x1C
+        }
+    
+    if BITMASK.get(rate) is None:
+        raise ValueError("Invalid sample rate")
+    data |= BITMASK.get(rate)
+    
     i2c.writeto_mem(SPO2_ADDR, SPO2_CONFIG_REG, bytearray([data]))
     
     return
 
 i2c0, sensor = spo2_setup()
 set_spo2_sample_rate(i2c0, rate=100)
+set_spo2_pulse_width(i2c0, width=118)
 
 while True:
     
