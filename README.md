@@ -67,6 +67,7 @@ Secondary:
 
 [2] J. K. Boulger, K. Hinami, T. Lyons, and J. Nowinski Konchak, “Prevalence and risk factors for opioid related mortality among probation clients in an American city,” Journal of Substance Abuse Treatment, vol. 137, p. 108712, Jun. 2022, doi: 10.1016/j.jsat.2021.108712. PMID: 35067401.
 
+# Progress Notes
 
 ## 6/19/2026
 
@@ -155,4 +156,15 @@ Temperature data registers 0x1F-0x21:
  
 Temperature integer value represented in big endian 2’s complement format. Fractional value incremented in multiples of 0.0625. Temperature config register bit 0 set to 1 to read temperature and is automatically cleared.
 
+## 6/26/2026
 
+Modified code to connect to send packets through UDP. Made socket and wlan global and initialized outside of sensor for better separation of concerns. 
+Reading the FIFO_DATA register (0x07) does not automatically increment the register address. Maximum sample rate for ADC depends on pulse width. For 118us, ADC resolution is 16 bits. FIFO register should be read in 3-byte bursts. For SpO2 mode, one sample requires 6-byte reads.
+
+FIFO config register (0x08) bits 7:5 determine the number of samples averaged:
+
+<img width="975" height="145" alt="image" src="https://github.com/user-attachments/assets/c4bc2bd8-1b2c-4397-947b-35b4286650da" />
+
+Setter function for sample averaging implemented and set to 8 by default. Bit 4 set for FIFO rollover enable by default.
+
+To do: eventually move all SpO2 functions to a separate file. Accidentally ended up writing an entire driver for this module, so might as well use it as one.
