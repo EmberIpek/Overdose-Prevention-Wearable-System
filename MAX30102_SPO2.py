@@ -2,7 +2,8 @@
 #
 # This initializes an I2C bus for a MAX30102 sensor, puts it in SpO2 mode,
 # and gets a temperature reading every 0.5 seconds. Helper functions are
-# included to set SpO2 sample rate and pulse width.
+# included to set SpO2 sample rate, pulse width, ADC range, and get temperature
+# readings. Data is packed and sent to PC for unpacking/processing over UDP.
 
 import machine
 import utime
@@ -24,6 +25,32 @@ SPO2_DEVID_REG = 0xFF
 
 SPO2_SDA = machine.Pin(4)
 SPO2_SCL = machine.Pin(5)
+
+def connect_wifi():
+    # connect to hotspot
+    ssid = "SSID"
+    password = "PASSWORD"
+    wlan = network.WLAN(network.WLAN.IF_STA)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    while not wlan.isconnected():
+        utime.sleep(0.5)
+    print("Connected to Wi-Fi: ", wlan.ifconfig())
+    
+    # UDP setup
+    UDP_IP = "172.20.10.3"
+    UDP_PORT = 5005
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    return s, wlan
+
+# maintain wifi connection
+def maintain_wifi():
+    if not wlan.isconnected():
+        print("Wi-Fi lost, reconnecting...")
+        s = connect_wifi()
+    
+    return
 
 # helper function to set SpO2 pulse width
 # set bits 1:0, default 118us
@@ -176,11 +203,14 @@ def spo2_setup():
     print(data)
     utime.sleep_ms(100)
     
-    return i2c
+    s, wlan = connect_wifi()
+    
+    return i2c, s, wlan
 
-i2c0 = spo2_setup()
+i2c0, s, wlan = spo2_setup()
 
 while True:
+    maintain_wifi()
     # the internal die temperature sensor is intended for calibrating
     # the temperature dependence of the SpO2 subsystem
     # read the die temperature in Celsius
