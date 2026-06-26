@@ -1,9 +1,11 @@
 # Author: Ember Ipek
+# 6/23/2026
 #
 # This initializes an I2C bus for a MAX30102 sensor, puts it in SpO2 mode,
 # and gets a temperature reading every 0.5 seconds. Helper functions are
-# included to set SpO2 sample rate, pulse width, ADC range, and get temperature
-# readings. Data is packed and sent to PC for unpacking/processing over UDP.
+# included to set SpO2 sample rate, pulse width, ADC range, FIFO register,
+# and get temperature readings. Data is packed and sent to PC for
+# unpacking/processing over UDP.
 
 import machine
 import utime
@@ -14,6 +16,7 @@ import ustruct
 
 SPO2_ADDR = 0x57
 SPO2_FIFO_REG = 0x07
+SPO2_FIFO_CONFIG_REG = 0x08
 SPO2_MODE_REG = 0x09
 SPO2_CONFIG_REG = 0x0A
 SPO2_LED1_REG = 0x0C
@@ -35,8 +38,8 @@ UDP_PORT = 5005
 
 def connect_wifi():
     # connect to hotspot
-    ssid = "SSID"
-    password = "PASSWORD"
+    ssid = "FBI Surveillance Van #7"
+    password = "PeepeePoopoo"
     timeout = 20
     wlan = network.WLAN(network.WLAN.IF_STA)
     wlan.active(True)
@@ -184,6 +187,55 @@ def set_led_pulse_amplitude(i2c, amplitude=0x24):
     
     return
 
+# setter function for number of SpO2 samples per FIFO entry
+def set_spo2_sample_average(i2c, samples=8):
+    """
+    Sets number of samples to average per FIFO entry in SPO2_FIFO_CONFIG_REG
+    bits 7:5
+    
+    Args:
+        i2c: I2C bus
+        samples: number of samples to average
+              valid samples: 1, 2, 4, 8, 16, 32
+    """
+    BITS = {
+        1: 0x00,
+        2: 0x10,
+        4: 0x20,
+        8: 0x30,
+        16: 0x40,
+        32: 0x50
+        }
+    
+    data = i2c.readfrom_mem(SPO2_ADDR, SPO2_FIFO_CONFIG_REG, 1)[0]
+    value = BITS.get(samples)
+    if value is None:
+        raise ValueError("Invalid sample number")
+    # clear and set bits 7:5
+    data &= 0x1F
+    data |= value
+    
+    i2c.writeto_mem(SPO2_ADDR, SPO2_FIFO_CONFIG_REG, bytearray([data]))
+    
+    return
+
+def set_spo2_fifo_rollover(i2c, rollover=1):
+    """
+    Sets/clears FIFO rollover in SPO2_FIFO_CONFIG_REG bit 4. On by default.
+    
+    Args:
+        i2c: I2C bus
+        rollover: enabled if >= 1, disabled otherwise
+    """
+    data = i2c.readfrom_mem(SPO2_ADDR, SPO2_FIFO_CONFIG_REG, 1)[0]
+    if (rollover >= 1):
+        data |= 0x10
+    else:
+        data &= 0xEF
+    i2c.writeto_mem(SPO2_ADDR, SPO2_FIFO_CONFIG_REG, bytearray([data]))
+    
+    return
+
 def get_spo2_temp(i2c):
     """
     Gets temperature in C. Integer is represented in 2's complement in
@@ -197,6 +249,7 @@ def get_spo2_temp(i2c):
         Temperature in C
     """
     i2c.writeto_mem(SPO2_ADDR, SPO2_TEMP_CONFIG_REG, bytearray([0x01]))
+    # wait for conversion to finish
     while i2c.readfrom_mem(SPO2_ADDR, SPO2_TEMP_CONFIG_REG, 1)[0] & 0x01:
         utime.sleep_ms(1)
     
@@ -210,13 +263,17 @@ def get_spo2_temp(i2c):
 
 def spo2_setup():
     # use standard i2c speed 100kHz, set mode to SpO2 mode
-    i2c = machine.I2C(0, scl=SPO2_SCL, sda=SPO2_SDA, freq = 100000)
+    i2c = machine.I2C(0, scl=SPO2_SCL, sda=SPO2_SDA, freq=100000)
     i2c.writeto_mem(SPO2_ADDR, SPO2_MODE_REG, bytearray([0x03]))
     
     set_spo2_sample_rate(i2c, rate=100)
     set_spo2_pulse_width(i2c, width=118)
     set_spo2_adc_range(i2c, adc_range=4096)
     set_led_pulse_amplitude(i2c, amplitude=0x24)
+    set_spo2_sample_average(i2c, samples=8)
+    # small delay needed after mode change
+    utime.sleep_ms(50)
+    set_spo2_fifo_rollover(i2c, rollover=1)
     
     data = i2c.readfrom_mem(SPO2_ADDR, SPO2_DEVID_REG, 1)
     print(data)
