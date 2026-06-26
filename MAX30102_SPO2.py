@@ -38,8 +38,8 @@ UDP_PORT = 5005
 
 def connect_wifi():
     # connect to hotspot
-    ssid = "FBI Surveillance Van #7"
-    password = "PeepeePoopoo"
+    ssid = "SSID"
+    password = "PASSWORD"
     timeout = 20
     wlan = network.WLAN(network.WLAN.IF_STA)
     wlan.active(True)
