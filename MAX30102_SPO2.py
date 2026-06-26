@@ -37,24 +37,27 @@ def connect_wifi():
     # connect to hotspot
     ssid = "SSID"
     password = "PASSWORD"
+    timeout = 20
     wlan = network.WLAN(network.WLAN.IF_STA)
     wlan.active(True)
     wlan.connect(ssid, password)
-    while not wlan.isconnected():
+    
+    while not wlan.isconnected() and timeout > 0:
         utime.sleep(0.5)
-    print("Connected to Wi-Fi: ", wlan.ifconfig())
+        timeout -= 1
     
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    if wlan.isconnected():
+        print("Connected to Wi-Fi: ", wlan.ifconfig())
     
-    return s, wlan
+    return wlan
 
 # maintain wifi connection
-def maintain_wifi():
+def maintain_wifi(wlan):
     if not wlan.isconnected():
         print("Wi-Fi lost, reconnecting...")
-        s = connect_wifi()
+        wlan = connect_wifi()
     
-    return
+    return wlan
 
 # packs data for transmission over UDP
 # < = little endian, f = float
@@ -194,7 +197,8 @@ def get_spo2_temp(i2c):
         Temperature in C
     """
     i2c.writeto_mem(SPO2_ADDR, SPO2_TEMP_CONFIG_REG, bytearray([0x01]))
-    utime.sleep_ms(10)
+    while i2c.readfrom_mem(SPO2_ADDR, SPO2_TEMP_CONFIG_REG, 1)[0] & 0x01:
+        utime.sleep_ms(1)
     
     temp_int = i2c.readfrom_mem(SPO2_ADDR, SPO2_TEMP_INT_REG, 1)[0]
     temp_frac = i2c.readfrom_mem(SPO2_ADDR, SPO2_TEMP_FRAC_REG, 1)[0]
@@ -218,14 +222,14 @@ def spo2_setup():
     print(data)
     utime.sleep_ms(100)
     
-    s, wlan = connect_wifi()
-    
-    return i2c, s, wlan
+    return i2c
 
-i2c0, s, wlan = spo2_setup()
+i2c0 = spo2_setup()
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+wlan = connect_wifi()
 
 while True:
-    maintain_wifi()
+    wlan = maintain_wifi(wlan)
     # the internal die temperature sensor is intended for calibrating
     # the temperature dependence of the SpO2 subsystem
     # read the die temperature in Celsius
@@ -233,7 +237,8 @@ while True:
     print("Die temperature: ", temp_C, "C")
     packet = pack_data(temp_C)
     
-    s.sendto(packet, (UDP_IP, UDP_PORT))
-    print("Packet sent! IP: ", wlan.ifconfig())
+    if wlan.isconnected():
+        sock.sendto(packet, (UDP_IP, UDP_PORT))
+        print("Packet sent! IP: ", wlan.ifconfig())
     
     utime.sleep(0.5)
