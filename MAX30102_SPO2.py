@@ -26,6 +26,13 @@ SPO2_DEVID_REG = 0xFF
 SPO2_SDA = machine.Pin(4)
 SPO2_SCL = machine.Pin(5)
 
+UDP_IP = "172.20.10.3"
+UDP_PORT = 5005
+
+###################################################################
+# UDP setup
+###################################################################
+
 def connect_wifi():
     # connect to hotspot
     ssid = "SSID"
@@ -37,9 +44,6 @@ def connect_wifi():
         utime.sleep(0.5)
     print("Connected to Wi-Fi: ", wlan.ifconfig())
     
-    # UDP setup
-    UDP_IP = "172.20.10.3"
-    UDP_PORT = 5005
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
     return s, wlan
@@ -51,6 +55,17 @@ def maintain_wifi():
         s = connect_wifi()
     
     return
+
+# packs data for transmission over UDP
+# < = little endian, f = float
+def pack_data(temperature):
+    packet = ustruct.pack("<f", temperature)
+    
+    return packet
+
+###################################################################
+# SpO2 set/get functions 
+###################################################################
 
 # helper function to set SpO2 pulse width
 # set bits 1:0, default 118us
@@ -216,5 +231,9 @@ while True:
     # read the die temperature in Celsius
     temp_C = get_spo2_temp(i2c0)
     print("Die temperature: ", temp_C, "C")
+    packet = pack_data(temp_C)
+    
+    s.sendto(packet, (UDP_IP, UDP_PORT))
+    print("Packet sent! IP: ", wlan.ifconfig())
     
     utime.sleep(0.5)
