@@ -175,6 +175,6 @@ Refactored code to create a MAX30102 class for future driver implementation. Cre
 
 <img width="975" height="175" alt="image" src="https://github.com/user-attachments/assets/67d7b14d-7878-40cf-bb57-89854bfe1e38" />
 
-FIFO read and write pointers cleared upon setting SpO2 mode, as instructed in the data sheet. FIFO read function returns red and IR LED values, which spike when pressed against thumb. Values are out of range of the 16-bit ADC resolution (0 – (216 – 1)). Must clear top 6 bits and shift right by 18 – resolution. Added code to append checksum to packet. 
+FIFO read and write pointers cleared upon setting SpO2 mode, as instructed in the data sheet. FIFO read function returns red and IR LED values, which spike when pressed against thumb. Values are out of range of the 16-bit ADC resolution (0 – (2^16 – 1)). Must clear top 6 bits and shift right by 18 – resolution. Added code to append checksum to packet. 
 
 To do: use matplotlib to graph red and IR LED data, apply low pass filter.
