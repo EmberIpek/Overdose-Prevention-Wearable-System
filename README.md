@@ -168,3 +168,13 @@ FIFO config register (0x08) bits 7:5 determine the number of samples averaged:
 Setter function for sample averaging implemented and set to 8 by default. Bit 4 set for FIFO rollover enable by default.
 
 To do: eventually move all SpO2 functions to a separate file. Accidentally ended up writing an entire driver for this module, so might as well use it as one.
+
+## 6/29/2026
+
+Refactored code to create a MAX30102 class for future driver implementation. Created function to read FIFO data in 6-byte bursts for SpO2 mode. Samples are transmitted in a 24-bit field, with the upper six bits unused. When operating at less than 18-bit resolution, the valid ADC bits remain aligned to the most significant end of the 18-bit field:
+
+<img width="975" height="175" alt="image" src="https://github.com/user-attachments/assets/67d7b14d-7878-40cf-bb57-89854bfe1e38" />
+
+FIFO read and write pointers cleared upon setting SpO2 mode, as instructed in the data sheet. FIFO read function returns red and IR LED values, which spike when pressed against thumb. Values are out of range of the 16-bit ADC resolution (0 – (216 – 1)). Must clear top 6 bits and shift right by 18 – resolution. Added code to append checksum to packet. 
+
+To do: use matplotlib to graph red and IR LED data, apply low pass filter.
