@@ -178,3 +178,10 @@ Refactored code to create a MAX30102 class for future driver implementation. Cre
 FIFO read and write pointers cleared upon setting SpO2 mode, as instructed in the data sheet. FIFO read function returns red and IR LED values, which spike when pressed against thumb. Values are out of range of the 16-bit ADC resolution (0 – (2^16 – 1)). Must clear top 6 bits and shift right by 18 – resolution. Added code to append checksum to packet. 
 
 To do: use matplotlib to graph red and IR LED data, apply low pass filter.
+
+## 6/30/2026
+
+Sensor receiver code modified to graph first 1000 samples of IR and LED data received. Graph shows small, consistent spikes in data values when heart beats. Will verify further by increasing data transmission rate and testing for changes after exercise:
+
+<img width="506" height="392" alt="image" src="https://github.com/user-attachments/assets/029fd505-a505-4c28-a368-21c987dfccd3" />
+
