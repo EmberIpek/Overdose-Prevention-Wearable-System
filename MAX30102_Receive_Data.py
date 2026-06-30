@@ -10,8 +10,9 @@
 import socket
 import struct
 from datetime import datetime
+import time
 import matplotlib.pyplot as plt
-import scipy as sp
+from scipy import signal
 import numpy as np
 
 UDP_IP = "0.0.0.0"
@@ -73,7 +74,7 @@ while True:
             count += 1
             red_samples.append(red)
             ir_samples.append(ir)
-            time_received.append(datetime.now())
+            time_received.append(time.time())
         else:
             break
         
@@ -87,11 +88,25 @@ np_ir_samples = np.array(ir_samples, dtype=float)
 np_ir_samples -= np.mean(np_ir_samples)
 
 # compute spectrum
-spectrum = np.fft.fftshift(np.fft.fft(np_red_samples))
-plot_spectrum(spectrum, fs=100, doStem=False)
+# spectrum = np.fft.fftshift(np.fft.fft(np_red_samples))
+# plot_spectrum(spectrum, fs=100, doStem=False)
 
-plt.plot(time_received, red_samples, label='Red Samples')
-plt.plot(time_received, ir_samples,  label='IR Samples')
+# compute sampling rate using time received
+dt = np.diff(time_received)
+freq = 1 / np.mean(dt)
+
+# TO DO: error if transmission rate drops
+
+# Wn: The critical frequency or frequencies.
+# For lowpass and highpass filters, Wn is a scalar;
+# for bandpass and bandstop filters, Wn is a length-2 sequence.
+bp_filter = signal.butter(N=4, Wn=(0.5, 7), btype="bandpass", output="sos", fs=freq)
+filtered_red = signal.sosfilt(bp_filter, red_samples)
+
+t = np.arange(len(filtered_red)) / freq
+plt.plot(t, filtered_red, label='Filtered Red Samples')
+plt.plot(t, red_samples, label='Red Samples')
+# plt.plot(time_received, ir_samples,  label='IR Samples')
 plt.legend()
 plt.title("LED Samples")
 plt.xlabel("time")
