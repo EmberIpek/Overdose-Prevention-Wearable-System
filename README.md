@@ -183,5 +183,5 @@ To do: use matplotlib to graph red and IR LED data, apply low pass filter.
 
 Sensor receiver code modified to graph first 1000 samples of IR and LED data received. Graph shows small, consistent spikes in data values when heart beats. Will verify further by increasing data transmission rate and testing for changes after exercise:
 
-<img width="506" height="392" alt="image" src="https://github.com/user-attachments/assets/029fd505-a505-4c28-a368-21c987dfccd3" />
+<img width="506" height="392" alt="image" src="https://github.com/user-attachments/assets/029fd505-a505-4c28-a368-21c987dfccd3" /> <img width="474" height="357" alt="image" src="https://github.com/user-attachments/assets/795cfb20-0a6d-4b87-a16f-00ab5f307aa0" />
 
