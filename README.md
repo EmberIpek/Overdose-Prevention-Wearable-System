@@ -189,4 +189,11 @@ Np.mean subtracted from signal to normalize signal, np.fft used to analyze signa
 
 <img width="882" height="561" alt="image" src="https://github.com/user-attachments/assets/d492784b-e620-46f8-91f3-fbc5f180a884" />
 
+Signal is passed through butterworth bandpass filter (0.5 – 7Hz) to filter out noise. Sampling rate is estimated using time_received. Filtered signal looks more stable but should parameterize filter coefficients later:
+
+<img width="534" height="392" alt="image" src="https://github.com/user-attachments/assets/43682724-b52a-4386-b1bf-70fe0276172d" />
+ 
+To do: throw exception if transmission rate drops below threshold. Try filtfilt, narrower bandpass range.
+
 Acknowledgements: plot_spectrum() function from ECE201 Signals and Systems, Dr. Bernd-Peter Paris, George Mason University.
+
