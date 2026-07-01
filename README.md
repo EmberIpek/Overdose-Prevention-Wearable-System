@@ -199,3 +199,23 @@ To do: throw exception if transmission rate drops below threshold. Try filtfilt,
 
 Acknowledgements: plot_spectrum() function from ECE201 Signals and Systems, Dr. Bernd-Peter Paris, George Mason University.
 
+## 7/1/2026
+
+Bandpass filter moved to separate function, filtered signal plotted against normalized raw values, passed through SciPy filtfilt to obtain clean AC sample:
+
+<img width="560" height="438" alt="image" src="https://github.com/user-attachments/assets/6f2f47a7-d447-4cc9-a529-7e1b456247e3" />
+
+Read SciPy buttord documentation to determine how to find optimal order for butterworth filter. To compute SpO2, red and IR samples will be filtered and the ratio calculated with R=(AC_ir/DC_ir)/(AC_red/DC_red).
+Real-time DC component of signal obtained through lowpass filter (0.4Hz):
+ 
+<img width="572" height="439" alt="image" src="https://github.com/user-attachments/assets/bcdf6512-0920-41d9-8f96-1a913d676c10" />
+
+Plotting red and IR ratios give similar values, trying using unfiltered DC signal with np.mean:
+
+<img width="535" height="413" alt="image" src="https://github.com/user-attachments/assets/198eca51-57ea-4bfb-a02b-ee9a480b6caf" />
+
+Calculating ratio requires RMS values of signals within a window: V_RMS=√((∑〖V_n〗^2)/n)
+
+RMS value function written.
+
+To do: find peak values to calculate bpm, read SciPy signal.find_peaks documentation, calculate ratio correctly, use np.mean for DC component.
