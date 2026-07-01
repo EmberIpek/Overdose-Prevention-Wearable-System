@@ -214,8 +214,10 @@ Plotting red and IR ratios give similar values, trying using unfiltered DC signa
 
 <img width="535" height="413" alt="image" src="https://github.com/user-attachments/assets/198eca51-57ea-4bfb-a02b-ee9a480b6caf" />
 
-Calculating ratio requires RMS values of signals within a window: V_RMS=√((∑〖V_n〗^2)/n)
+RMS value function written. Calculating ratio requires RMS values of signals within a window:
 
-RMS value function written.
+$$
+V_{\mathrm{RMS}} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} V_n^2}
+$$
 
 To do: find peak values to calculate bpm, read SciPy signal.find_peaks documentation, calculate ratio correctly, use np.mean for DC component.
