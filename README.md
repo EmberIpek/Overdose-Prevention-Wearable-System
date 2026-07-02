@@ -221,3 +221,13 @@ V_{\mathrm{RMS}} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} V_n^2}
 $$
 
 To do: find peak values to calculate bpm, read SciPy signal.find_peaks documentation, calculate ratio correctly, use np.mean for DC component.
+
+## 7/2/2026
+
+Signal.find_peaks documentation read. Np.mean used for calculating DC component of ratio and RMS for AC, lowpass filter result kept for extracting AC data. Cast list into np array and used formula to convert ratio to SpO2 estimation:
+
+<img width="470" height="374" alt="image" src="https://github.com/user-attachments/assets/6d9e8084-eb61-44c1-88dc-18b6f4c2ff2c" />
+<img width="470" height="374" alt="image" src="https://github.com/user-attachments/assets/feef65db-4bf3-49c4-82e9-440ba087c3d8" />
+
+Use np.convolve or apply lowpass filter to resulting ratio to smooth before calculating SpO2. Measure peaks with signal.find_peaks.
+
