@@ -94,6 +94,7 @@ while True:
               ", IR LED: ", ir,
               ", checksum: ", checksum)
         
+        # receive first 2000 packets then graph
         if(count < 2000):
             count += 1
             red_samples.append(red)
@@ -131,11 +132,23 @@ np_ir_AC = np_ir_samples - np_ir_DC
 filtered_red_AC = bandpass_filter(np_red_AC, fs=freq)
 filtered_ir_AC = bandpass_filter(np_ir_AC, fs=freq)
 
-# Ratio: oxygen saturation to be calculated with (AC_ir/DC_ir)/(AC_red/DC_red)
-# TO DO: This should be RMS values
-ratio_red = filtered_red_AC/np_red_DC
-ratio_ir = filtered_ir_AC/np_ir_DC
-o2_sat = ratio_ir/ratio_red
+# these should be RMS values within a windowed segment (2s)
+window = int(freq * 2)
+ratio = []
+
+for i in range(window, len(np_red_samples)):
+    red_seg = filtered_red_AC[i-window:i]
+    ir_seg  = filtered_ir_AC[i-window:i]
+    # find RMS value of AC segment in window
+    AC_red = rms(red_seg)
+    AC_ir  = rms(ir_seg)
+    # find average DC component in window
+    DC_red = np.mean(np_red_samples[i-window:i])
+    DC_ir  = np.mean(np_ir_samples[i-window:i])
+    
+    ratio.append((AC_red/DC_red)/(AC_ir/DC_ir))
+
+ratio = np.array(ratio)
 
 ##################################################################
 # Plotting signals
@@ -155,9 +168,14 @@ t = np.arange(len(filtered_red_AC)) / freq
 # plt.plot(t, np_ir_DC, label='IR DC')
 
 # Ratio
-plt.plot(t, ratio_red, label='Red Ratio')
-plt.plot(t, ratio_ir, label='IR Ratio')
-# plt.plot(t, o2_sat, label='O2 Saturation')
+# plt.plot(t, ratio_red, label='Red Ratio')
+# plt.plot(t, ratio_ir, label='IR Ratio')
+t_R = t[window:] - (window / (2 * freq))
+# plt.plot(t_R, ratio, label='ratio')
+
+# SpO2 saturation
+spo2 = 104.0 - (17.0 * ratio)
+plt.plot(t_R, spo2, label='oxygen saturation')
 
 plt.legend()
 plt.title("LED Samples")
