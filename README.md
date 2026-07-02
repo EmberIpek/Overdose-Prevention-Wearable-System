@@ -229,5 +229,8 @@ Signal.find_peaks documentation read. Np.mean used for calculating DC component 
 <img width="470" height="374" alt="image" src="https://github.com/user-attachments/assets/6d9e8084-eb61-44c1-88dc-18b6f4c2ff2c" />
 <img width="470" height="374" alt="image" src="https://github.com/user-attachments/assets/feef65db-4bf3-49c4-82e9-440ba087c3d8" />
 
-Use np.convolve or apply lowpass filter to resulting ratio to smooth before calculating SpO2. Measure peaks with signal.find_peaks.
+Measured peaks with signal.find_peaks and plotted. Light exercise while holding module verifies heart rate increase:
 
+<img width="975" height="583" alt="image" src="https://github.com/user-attachments/assets/d280d08c-6736-4be1-9325-6d75f6c33c26" />
+
+To do: Use np.convolve or apply lowpass filter to resulting ratio to smooth before calculating SpO2.
