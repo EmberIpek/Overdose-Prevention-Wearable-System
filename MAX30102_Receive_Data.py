@@ -134,28 +134,60 @@ filtered_ir_AC = bandpass_filter(np_ir_AC, fs=freq)
 
 # these should be RMS values within a windowed segment (2s)
 window = int(freq * 2)
-ratio = []
 
-for i in range(window, len(np_red_samples)):
-    red_seg = filtered_red_AC[i-window:i]
-    ir_seg  = filtered_ir_AC[i-window:i]
-    # find RMS value of AC segment in window
-    AC_red = rms(red_seg)
-    AC_ir  = rms(ir_seg)
-    # find average DC component in window
-    DC_red = np.mean(np_red_samples[i-window:i])
-    DC_ir  = np.mean(np_ir_samples[i-window:i])
-    
-    ratio.append((AC_red/DC_red)/(AC_ir/DC_ir))
+#############################################################
+# SpO2
+#############################################################
 
-ratio = np.array(ratio)
+def get_ratio():
+	ratio = []
+
+	for i in range(window, len(np_red_samples)):
+		red_seg = filtered_red_AC[i-window:i]
+		ir_seg  = filtered_ir_AC[i-window:i]
+		# find RMS value of AC segment in window
+		AC_red = rms(red_seg)
+		AC_ir  = rms(ir_seg)
+		# find average DC component in window
+		DC_red = np.mean(np_red_samples[i-window:i])
+		DC_ir  = np.mean(np_ir_samples[i-window:i])
+		
+		ratio.append((AC_red/DC_red)/(AC_ir/DC_ir))
+	
+	return ratio
+
+################################################################
+# Heart rate
+################################################################
+
+# signal.find_peaks returns indices of peaks that satisfy conditions
+# use to find times and calculate heart rate with a rolling window
+def get_heartrate():
+	peak_indices, _ = signal.find_peaks(filtered_red_AC, distance=int(freq * 0.4))
+	window = 5
+	peak_times = np.array(time_received)[peak_indices]
+	heartrate_list = []
+
+	for i in range(window, len(peak_indices)):
+		t = peak_times[i-window:i]
+		dt = np.diff(t)
+		
+		if len(dt) > 0:
+			heartrate = 60 / np.mean(dt)
+			heartrate_list.append(heartrate)
+
+	return heartrate_list
 
 ##################################################################
 # Plotting signals
 ##################################################################
 
+ratio = np.array(get_ratio())
+heartrate_list = get_heartrate()
+
 # plot_spectrum(filtered_red_AC, fs=freq)
 t = np.arange(len(filtered_red_AC)) / freq
+t_o2 = t[window:] - (window / (2 * freq))
 
 # AC component
 # plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
@@ -170,16 +202,21 @@ t = np.arange(len(filtered_red_AC)) / freq
 # Ratio
 # plt.plot(t, ratio_red, label='Red Ratio')
 # plt.plot(t, ratio_ir, label='IR Ratio')
-t_R = t[window:] - (window / (2 * freq))
 # plt.plot(t_R, ratio, label='ratio')
 
 # SpO2 saturation
 spo2 = 104.0 - (17.0 * ratio)
-plt.plot(t_R, spo2, label='oxygen saturation')
+plt.subplot(3, 1, 1)
+plt.plot(spo2, label='oxygen saturation')
+plt.title("Oxygen Saturation")
+plt.xlabel("time")
+plt.ylabel("%")
+
+plt.subplot(3, 1, 2)
+plt.plot(heartrate_list, label='heartrate')
+plt.title("Heart Rate")
+plt.xlabel("time")
+plt.ylabel("BPM")
 
 plt.legend()
-plt.title("LED Samples")
-plt.xlabel("time")
-plt.ylabel("ADC value")
-
 plt.show()
