@@ -14,127 +14,71 @@ import time
 import matplotlib.pyplot as plt
 from scipy import signal
 import numpy as np
+from collections import deque
 
 UDP_IP = "0.0.0.0"
-UDP_PORT = 5005
+PICO_IP = "172.20.10.10"
+TX_PORT = 5006
+RX_PORT = 5005
 
 #######################################################################
 # signal processing
 #######################################################################
 
 def rms(window):
-    '''Returns RMS value of window of samples.'''
-    
-    return np.sqrt(np.mean(window**2))
+	'''Returns RMS value of window of samples.'''
+	
+	return np.sqrt(np.mean(window**2))
 
 # Wn: The critical frequency or frequencies.
 # For lowpass and highpass filters, Wn is a scalar;
 # for bandpass and bandstop filters, Wn is a length-2 sequence.
 def lowpass_filter(samples, order=4, cutoff=0.4, fs=float):
+    # clamp range if sampling below nyquist rate
+    if(freq < (2 * cutoff)):
+        cutoff = (freq/2) * 0.99
+    
     b, a = signal.butter(N=order, Wn=cutoff, btype="lowpass", fs=freq)
     filtered_signal = signal.filtfilt(b, a, samples)
     
     return filtered_signal
 
 def bandpass_filter(samples, order=4, low=0.5, high=4.5, fs=float):
+	# clamp range if sampling below nyquist rate
+    if(freq < (2 * high)):
+        high = (freq/2) * 0.99
+    if(high < low):
+        low = 0.1
+    
     b, a = signal.butter(N=order, Wn=(low, high), btype="bandpass", fs=freq)
     filtered_signal = signal.filtfilt(b, a, samples)
     
     return filtered_signal
 
 def plot_spectrum(Xv, fs, doStem=False):
-    """Plot magnitude and phase of the spectrum"""
+	"""Plot magnitude and phase of the spectrum"""
 
-    N = len(Xv)
-    ff = np.arange(-N/2, N/2, 1) * fs/N
+	N = len(Xv)
+	ff = np.arange(-N/2, N/2, 1) * fs/N
 
-    fig, (axm, axp) = plt.subplots(2, 1, layout='constrained')
-    
-    if doStem:
-        axm.stem(ff, np.abs(Xv))
-    else:
-        axm.semilogy(ff, np.abs(Xv))
-    axm.grid()
-    axm.set_ylabel('Magnitude')
+	fig, (axm, axp) = plt.subplots(2, 1, layout='constrained')
+	
+	if doStem:
+		axm.stem(ff, np.abs(Xv))
+	else:
+		axm.semilogy(ff, np.abs(Xv))
+	axm.grid()
+	axm.set_ylabel('Magnitude')
 
-    if doStem:
-        axp.stem(ff, np.angle(Xv)/np.pi)
-    else:
-        axp.plot(ff, np.angle(Xv)/np.pi)
-    axp.set_xlabel('Frequency (Hz)')
-    axp.set_ylabel('Phase (rad/$\pi$)')
-    axp.grid()
+	if doStem:
+		axp.stem(ff, np.angle(Xv)/np.pi)
+	else:
+		axp.plot(ff, np.angle(Xv)/np.pi)
+	axp.set_xlabel('Frequency (Hz)')
+	axp.set_ylabel('Phase (rad/$\pi$)')
+	axp.grid()
 
-    plt.show()
-
-# initialize UDP
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind((UDP_IP, UDP_PORT))
-
-count = 0
-red_samples = []
-ir_samples = []
-time_received = []
-
-print("Listening on port", UDP_PORT)
-
-while True:
-    packet, addr = sock.recvfrom(1024)
-    print("Received", len(packet), "bytes from", addr)
-    
-    # > = big endian, f = float, i = signed int
-    try:
-        data = struct.unpack(">fiiH", packet)
-        temperature = data[0]
-        red = data[1]
-        ir = data[2]
-        checksum = data[3]
-        
-        print("UDP received! Temperature: ", temperature,
-              ", Red LED: ", red,
-              ", IR LED: ", ir,
-              ", checksum: ", checksum)
-        
-        # receive first 2000 packets then graph
-        if(count < 2000):
-            count += 1
-            red_samples.append(red)
-            ir_samples.append(ir)
-            time_received.append(time.time())
-        else:
-            break
-        
-    except struct.error:
-        print("Packet unpacking failed")
-
-# compute average sampling rate using time received
-dt = np.diff(time_received)
-freq = 1 / np.mean(dt)
-
-# TO DO: error if transmission rate drops
-
-# put samples into np array and remove DC component
-np_red_samples = np.array(red_samples, dtype=float)
-np_red_DC = lowpass_filter(np_red_samples, fs=freq)
-# np_red_DC = np.mean(np_red_samples)
-np_red_AC = np_red_samples - np_red_DC
-
-np_ir_samples = np.array(ir_samples, dtype=float)
-np_ir_DC = lowpass_filter(np_ir_samples, fs=freq)
-# np_ir_DC = np.mean(np_ir_samples)
-np_ir_AC = np_ir_samples - np_ir_DC
-
-# compute spectrum
-# spectrum = np.fft.fftshift(np.fft.fft(np_red_samples))
-# plot_spectrum(spectrum, fs=100, doStem=False)
-# bp_filter = signal.butter(N=4, Wn=(0.5, 7), btype="bandpass", output="sos", fs=freq)
-# filtered_red = signal.sosfilt(bp_filter, red_samples)
-
-filtered_red_AC = bandpass_filter(np_red_AC, fs=freq)
-filtered_ir_AC = bandpass_filter(np_ir_AC, fs=freq)
-
-# these should be RMS values within a windowed segment (2s)
-
+	plt.show()
 
 #############################################################
 # SpO2
@@ -180,59 +124,135 @@ def get_heartrate():
 
 	return heartrate_list
 
-##################################################################
-# Plotting signals
-##################################################################
+# initialize UDP
+tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+rx_sock.bind((UDP_IP, RX_PORT))
 
-ratio = np.array(get_ratio(freq))
-spo2 = 104.0 - (17.0 * ratio)
-heartrate_list = get_heartrate()
+count = 0
+# red_samples = []
+# ir_samples = []
+# time_received = []
+red_samples = deque(maxlen=2000)
+ir_samples = deque(maxlen=2000)
+time_received = deque(maxlen=2000)
 
-spo2_filtered = lowpass_filter(spo2, cutoff=0.4)
-heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10)
-heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
+print("Listening on port", RX_PORT)
 
-# plot_spectrum(filtered_red_AC, fs=freq)
 
-# time axis
-t = np.arange(len(filtered_red_AC)) / freq
-# t_o2 = t[window:] - (window / (2 * freq))
+#################################################################
+# Processing loop
+#################################################################
 
-plt.figure(figsize=(10, 6))
+while True:
+	packet, addr = rx_sock.recvfrom(1024)
+	print("Received", len(packet), "bytes from", addr)
+	
+	# > = big endian, f = float, i = signed int
+	try:
+		data = struct.unpack(">fiiH", packet)
+		temperature = data[0]
+		red = data[1]
+		ir = data[2]
+		checksum = data[3]
+		
+		print("UDP received! Temperature: ", temperature,
+			  ", Red LED: ", red,
+			  ", IR LED: ", ir,
+			  ", checksum: ", checksum)
+		
+		# receive first 2000 packets then graph
+		if(count < 2000):
+			count += 1
+			red_samples.append(red)
+			ir_samples.append(ir)
+			time_received.append(time.time())
+			if(not count % 100):
+				data = 1.11
+				packet = struct.pack(">f", data)
+				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
+		else:
+			count = 0
+			# compute average sampling rate using time received
+			dt = np.diff(time_received)
+			freq = 1 / np.mean(dt)
+			# TO DO: error if transmission rate drops
+			# put samples into np array and remove DC component
+			np_red_samples = np.array(red_samples, dtype=float)
+			np_red_DC = lowpass_filter(np_red_samples)
+			# np_red_DC = np.mean(np_red_samples)
+			np_red_AC = np_red_samples - np_red_DC
+			np_ir_samples = np.array(ir_samples, dtype=float)
+			np_ir_DC = lowpass_filter(np_ir_samples)
+			# np_ir_DC = np.mean(np_ir_samples)
+			np_ir_AC = np_ir_samples - np_ir_DC
+			# compute spectrum
+			# spectrum = np.fft.fftshift(np.fft.fft(np_red_samples))
+			# plot_spectrum(spectrum, fs=100, doStem=False)
+			# bp_filter = signal.butter(N=4, Wn=(0.5, 7), btype="bandpass", output="sos", fs=freq)
+			# filtered_red = signal.sosfilt(bp_filter, red_samples)
 
-# AC component
-# plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
-# plt.plot(t, np_red_AC, label='Red Samples')
-# plt.plot(t, filtered_ir_AC, label='Filtered IR Samples')
-# plt.plot(t, np_ir_AC, label='IR Samples')
+			# Digital filter critical frequencies must be 0 < Wn < fs/2
+			filtered_red_AC = bandpass_filter(np_red_AC, fs=freq)
+			filtered_ir_AC = bandpass_filter(np_ir_AC, fs=freq)
 
-# DC component
-# plt.plot(t, np_red_DC, label='Red DC')
-# plt.plot(t, np_ir_DC, label='IR DC')
+			# these should be RMS values within a windowed segment (2s)
 
-# Ratio
-# plt.plot(t, ratio_red, label='Red Ratio')
-# plt.plot(t, ratio_ir, label='IR Ratio')
-# plt.plot(t_R, ratio, label='ratio')
+			##################################################################
+			# Plotting signals
+			##################################################################
 
-# SpO2 saturation
-plt.subplot(3, 1, 1)
-plt.plot(spo2_filtered, label='oxygen saturation')
-plt.title("Oxygen Saturation")
-plt.xlabel("time")
-plt.ylabel("%")
+			ratio = np.array(get_ratio(freq))
+			spo2 = 104.0 - (17.0 * ratio)
+			heartrate_list = get_heartrate()
 
-plt.subplot(3, 1, 2)
-plt.plot(heartrate_filtered, label='heartrate')
-plt.title("Heart Rate (Lowpass Filter)")
-plt.xlabel("time")
-plt.ylabel("BPM")
+			spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+			heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
+			heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
+			
+			# plot_spectrum(filtered_red_AC, fs=freq)
 
-plt.subplot(3, 1, 3)
-plt.plot(heartrate_convolved, label='heartrate')
-plt.title("Heart Rate (Convolved)")
-plt.xlabel("time")
-plt.ylabel("BPM")
+			# time axis
+			t = np.arange(len(filtered_red_AC)) / freq
+			# t_o2 = t[window:] - (window / (2 * freq))
 
-plt.tight_layout()
-plt.show()
+			plt.figure(figsize=(10, 6))
+
+			# AC component
+			# plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
+			# plt.plot(t, np_red_AC, label='Red Samples')
+			# plt.plot(t, filtered_ir_AC, label='Filtered IR Samples')
+			# plt.plot(t, np_ir_AC, label='IR Samples')
+
+			# DC component
+			# plt.plot(t, np_red_DC, label='Red DC')
+			# plt.plot(t, np_ir_DC, label='IR DC')
+
+			# Ratio
+			# plt.plot(t, ratio_red, label='Red Ratio')
+			# plt.plot(t, ratio_ir, label='IR Ratio')
+			# plt.plot(t_R, ratio, label='ratio')
+
+			# SpO2 saturation
+			plt.subplot(3, 1, 1)
+			plt.plot(spo2_filtered, label='oxygen saturation')
+			plt.title("Oxygen Saturation")
+			plt.xlabel("time")
+			plt.ylabel("%")
+
+			plt.subplot(3, 1, 2)
+			plt.plot(heartrate_filtered, label='heartrate')
+			plt.title("Heart Rate (Lowpass Filter)")
+			plt.xlabel("time")
+			plt.ylabel("BPM")
+
+			plt.subplot(3, 1, 3)
+			plt.plot(heartrate_convolved, label='heartrate')
+			plt.title("Heart Rate (Convolved)")
+			plt.xlabel("time")
+			plt.ylabel("BPM")
+
+			plt.tight_layout()
+			plt.show()
+	except struct.error:
+		print("Packet unpacking failed")
