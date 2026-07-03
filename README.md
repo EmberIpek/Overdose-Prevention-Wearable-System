@@ -234,3 +234,13 @@ Measured peaks with signal.find_peaks and plotted. Light exercise while holding 
 <img width="975" height="583" alt="image" src="https://github.com/user-attachments/assets/d280d08c-6736-4be1-9325-6d75f6c33c26" />
 
 To do: Use np.convolve or apply lowpass filter to resulting ratio to smooth before calculating SpO2.
+
+## 7/3/2026
+
+O2 and heart rate signal cleaned up with further signal processing, low pass filter comparted with convolution:
+
+<img width="975" height="572" alt="image" src="https://github.com/user-attachments/assets/af2b7a7e-8770-4918-ae71-441eb0553f73" />
+ 
+Setting up 7-segment displays to show heart rate and SpO2 data in real time, with green and red LEDs showing safe and unsafe range, respectively:
+
+<img width="640" height="493" alt="image" src="https://github.com/user-attachments/assets/a714b300-6877-4576-aa47-06670df7b0c3" />
