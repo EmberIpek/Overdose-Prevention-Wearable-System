@@ -237,7 +237,7 @@ To do: Use np.convolve or apply lowpass filter to resulting ratio to smooth befo
 
 ## 7/3/2026
 
-O2 and heart rate signal cleaned up with further signal processing, low pass filter comparted with convolution:
+O2 and heart rate signal cleaned up with further signal processing, low pass filter compared with convolution:
 
 <img width="975" height="572" alt="image" src="https://github.com/user-attachments/assets/af2b7a7e-8770-4918-ae71-441eb0553f73" />
  
