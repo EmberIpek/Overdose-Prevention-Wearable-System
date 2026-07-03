@@ -244,3 +244,7 @@ O2 and heart rate signal cleaned up with further signal processing, low pass fil
 Setting up 7-segment displays to show heart rate and SpO2 data in real time, with green and red LEDs showing safe and unsafe range, respectively:
 
 <img width="640" height="493" alt="image" src="https://github.com/user-attachments/assets/a714b300-6877-4576-aa47-06670df7b0c3" />
+
+Use PC to send data back to Pico (dummy data for now). Turned sample lists into FIFO buffers and implemented 2-way communication with the Pico. **Sometimes the sample rate dips below the Nyquist rate for the high end of the bandpass filter. Clamped frequency value passed into filters to ensure program does not crash.**
+
+To do: Define packet, with status bits for low SpO2, tachycardia, and bradycardia. Unpack on Pico and update 7-seg displays and LEDs
