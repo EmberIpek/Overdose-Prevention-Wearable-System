@@ -24,6 +24,7 @@ UDP_PORT = 5005
 
 def rms(window):
     '''Returns RMS value of window of samples.'''
+    
     return np.sqrt(np.mean(window**2))
 
 # Wn: The critical frequency or frequencies.
@@ -133,15 +134,16 @@ filtered_red_AC = bandpass_filter(np_red_AC, fs=freq)
 filtered_ir_AC = bandpass_filter(np_ir_AC, fs=freq)
 
 # these should be RMS values within a windowed segment (2s)
-window = int(freq * 2)
+
 
 #############################################################
 # SpO2
 #############################################################
 
-def get_ratio():
+def get_ratio(fs=float):
 	ratio = []
-
+	window = int(fs * 2)
+	
 	for i in range(window, len(np_red_samples)):
 		red_seg = filtered_red_AC[i-window:i]
 		ir_seg  = filtered_ir_AC[i-window:i]
@@ -182,12 +184,21 @@ def get_heartrate():
 # Plotting signals
 ##################################################################
 
-ratio = np.array(get_ratio())
+ratio = np.array(get_ratio(freq))
+spo2 = 104.0 - (17.0 * ratio)
 heartrate_list = get_heartrate()
 
+spo2_filtered = lowpass_filter(spo2, cutoff=0.4)
+heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10)
+heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
+
 # plot_spectrum(filtered_red_AC, fs=freq)
+
+# time axis
 t = np.arange(len(filtered_red_AC)) / freq
-t_o2 = t[window:] - (window / (2 * freq))
+# t_o2 = t[window:] - (window / (2 * freq))
+
+plt.figure(figsize=(10, 6))
 
 # AC component
 # plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
@@ -205,18 +216,23 @@ t_o2 = t[window:] - (window / (2 * freq))
 # plt.plot(t_R, ratio, label='ratio')
 
 # SpO2 saturation
-spo2 = 104.0 - (17.0 * ratio)
 plt.subplot(3, 1, 1)
-plt.plot(spo2, label='oxygen saturation')
+plt.plot(spo2_filtered, label='oxygen saturation')
 plt.title("Oxygen Saturation")
 plt.xlabel("time")
 plt.ylabel("%")
 
 plt.subplot(3, 1, 2)
-plt.plot(heartrate_list, label='heartrate')
-plt.title("Heart Rate")
+plt.plot(heartrate_filtered, label='heartrate')
+plt.title("Heart Rate (Lowpass Filter)")
 plt.xlabel("time")
 plt.ylabel("BPM")
 
-plt.legend()
+plt.subplot(3, 1, 3)
+plt.plot(heartrate_convolved, label='heartrate')
+plt.title("Heart Rate (Convolved)")
+plt.xlabel("time")
+plt.ylabel("BPM")
+
+plt.tight_layout()
 plt.show()
