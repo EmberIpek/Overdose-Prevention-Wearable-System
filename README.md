@@ -248,3 +248,10 @@ Setting up 7-segment displays to show heart rate and SpO2 data in real time, wit
 Use PC to send data back to Pico (dummy data for now). Turned sample lists into FIFO buffers and implemented 2-way communication with the Pico. **Sometimes the sample rate dips below the Nyquist rate for the high end of the bandpass filter. Clamped frequency value passed into filters to ensure program does not crash.**
 
 To do: Define packet, with status bits for low SpO2, tachycardia, and bradycardia. Unpack on Pico and update 7-seg displays and LEDs
+
+## 7/6/2026
+
+Updated circuit diagram for 7-seg display:
+
+<img width="1043" height="755" alt="image" src="https://github.com/user-attachments/assets/6685b549-b4ad-48be-97f6-1b9fb29d4b5c" />
+
