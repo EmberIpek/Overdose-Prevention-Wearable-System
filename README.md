@@ -255,6 +255,6 @@ Updated circuit diagram for 7-seg display:
 
 <img width="1043" height="755" alt="image" src="https://github.com/user-attachments/assets/6685b549-b4ad-48be-97f6-1b9fb29d4b5c" />
 
-Created separate file for 7-seg function. Wired and initialized segments.
+Created separate file for 7-seg function. Wired and initialized segments. Filtfilt padlen is 15 by default, created check to make sure input signal length > 15 before passing through.
 
 To do: split UDP and sensor code into separate files, define range for LEDs, PC still sending back dummy values to Pico, send back the heart rate and SpO2 data. Average heart rate and SpO2 and send back every 100 iterations. Unpack on Pico and use to update display: truncate float to 4 significant digits
