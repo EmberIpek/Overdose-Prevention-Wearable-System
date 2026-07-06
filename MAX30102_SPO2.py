@@ -12,12 +12,43 @@ import utime
 import network
 import socket
 import ustruct
+import SSEG_CC
+# from max30102 import MAX30102
 
 SPO2_SDA = machine.Pin(4)
 SPO2_SCL = machine.Pin(5)
 
 UDP_IP = "172.20.10.3"
-UDP_PORT = 5005
+TX_PORT = 5005
+RX_PORT = 5006
+
+dig_1 = machine.Pin(0, machine.Pin.OUT)
+dig_2 = machine.Pin(1, machine.Pin.OUT)
+dig_3 = machine.Pin(2, machine.Pin.OUT)
+dig_4 = machine.Pin(3, machine.Pin.OUT)
+
+seg_a = machine.Pin(6, machine.Pin.OUT)
+seg_b = machine.Pin(7, machine.Pin.OUT)
+seg_c = machine.Pin(8, machine.Pin.OUT)
+seg_d = machine.Pin(9, machine.Pin.OUT)
+seg_e = machine.Pin(10, machine.Pin.OUT)
+seg_f = machine.Pin(11, machine.Pin.OUT)
+seg_g = machine.Pin(12, machine.Pin.OUT)
+seg_dp = machine.Pin(13, machine.Pin.OUT)
+
+digits = [dig_1,
+          dig_2,
+          dig_3,
+          dig_4]
+
+segments = [seg_a,
+            seg_b,
+            seg_c,
+            seg_d,
+            seg_e,
+            seg_f,
+            seg_g,
+            seg_dp]
 
 ###################################################################
 # UDP setup
@@ -55,6 +86,20 @@ def calc_checksum(data):
         checksum ^= byte
     
     return checksum
+
+
+def receive_packet():
+    while True:
+        try:
+            packet, addr = rx_sock.recvfrom(32)
+            ## update display and LEDs
+            # make unpack data/update display functions
+            data = ustruct.unpack(">f", packet)
+            dummy_data = data[0]
+            print(".................................Dummy data received: ", dummy_data)
+            
+        except OSError:
+            break
 
 # packs data for transmission over UDP and appends checksum
 # > = big endian, f = float, i = signed int
@@ -346,13 +391,21 @@ class MAX30102:
 i2c0 = machine.I2C(0, scl=SPO2_SCL, sda=SPO2_SDA, freq=100000)
 sensor = MAX30102(i2c0)
 sensor.spo2_setup()
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+rx_sock.bind(("0.0.0.0", 5006))
+rx_sock.setblocking(False)
+
 wlan = connect_wifi()
 
 while True:
     wlan = maintain_wifi(wlan)
-    # the internal die temperature sensor is intended for calibrating
-    # the temperature dependence of the SpO2 subsystem
+    count = 0
+    while(count<10):
+        receive_packet()
+        count += 1
     # read the die temperature in Celsius
     temp_C = sensor.get_temp()
     red, ir = sensor.get_fifo_data()
@@ -365,7 +418,7 @@ while True:
     packet = pack_data(temp_C, red, ir)
     
     if wlan.isconnected():
-        sock.sendto(packet, (UDP_IP, UDP_PORT))
+        tx_sock.sendto(packet, (UDP_IP, TX_PORT))
         print("Packet sent! IP: ", wlan.ifconfig())
-    
-    utime.sleep(0.5)
+        
+    receive_packet()
