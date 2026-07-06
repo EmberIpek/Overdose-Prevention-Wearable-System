@@ -94,9 +94,9 @@ def receive_packet():
             packet, addr = rx_sock.recvfrom(32)
             ## update display and LEDs
             # make unpack data/update display functions
-            data = ustruct.unpack(">f", packet)
-            dummy_data = data[0]
-            print(".................................Dummy data received: ", dummy_data)
+            data = ustruct.unpack(">i", packet)
+            heartrate = data[0]
+            print(".................................Heart rate received: ", heartrate)
             
         except OSError:
             break
@@ -399,7 +399,7 @@ rx_sock.bind(("0.0.0.0", 5006))
 rx_sock.setblocking(False)
 
 wlan = connect_wifi()
-
+current_hr = 0
 while True:
     wlan = maintain_wifi(wlan)
     count = 0
@@ -422,3 +422,4 @@ while True:
         print("Packet sent! IP: ", wlan.ifconfig())
         
     receive_packet()
+#     utime.sleep_ms(10)
