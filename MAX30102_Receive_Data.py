@@ -136,6 +136,7 @@ count = 0
 red_samples = deque(maxlen=2000)
 ir_samples = deque(maxlen=2000)
 time_received = deque(maxlen=2000)
+current_hr = 0
 
 print("Listening on port", RX_PORT)
 
@@ -162,17 +163,16 @@ while True:
 			  ", checksum: ", checksum)
 		
 		# receive first 2000 packets then graph
-		if(count < 2000):
+		if(count < 100):
 			count += 1
 			red_samples.append(red)
 			ir_samples.append(ir)
 			time_received.append(time.time())
-			if(not count % 100):
-				data = 1.11
-				packet = struct.pack(">f", data)
+			if(not count % 10):
+				data = current_hr
+				packet = struct.pack(">i", data)
 				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
 		else:
-			count = 0
 			# compute average sampling rate using time received
 			dt = np.diff(time_received)
 			freq = 1 / np.mean(dt)
@@ -206,17 +206,31 @@ while True:
 			spo2 = 104.0 - (17.0 * ratio)
 			heartrate_list = get_heartrate()
 
-			spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
-			heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
-			heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
+			# make sure input length > padlen
+			if len(spo2) > 15:
+				spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+			
+			if len(heartrate_list) > 15:
+				heartrate_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+				current_hr = heartrate_filtered[len(heartrate_filtered) - 1]
+
+			if(not count % 10):
+				data = current_hr
+				packet = struct.pack(">i", data)
+				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
+    
+			# spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+			# heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
+			# heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
+			# current_hr = heartrate_convolved[len(heartrate_convolved) - 1]
 			
 			# plot_spectrum(filtered_red_AC, fs=freq)
 
 			# time axis
-			t = np.arange(len(filtered_red_AC)) / freq
+			# t = np.arange(len(filtered_red_AC)) / freq
 			# t_o2 = t[window:] - (window / (2 * freq))
 
-			plt.figure(figsize=(10, 6))
+			# plt.figure(figsize=(10, 6))
 
 			# AC component
 			# plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
@@ -234,25 +248,27 @@ while True:
 			# plt.plot(t_R, ratio, label='ratio')
 
 			# SpO2 saturation
-			plt.subplot(3, 1, 1)
-			plt.plot(spo2_filtered, label='oxygen saturation')
-			plt.title("Oxygen Saturation")
-			plt.xlabel("time")
-			plt.ylabel("%")
+			# plt.subplot(3, 1, 1)
+			# plt.plot(spo2_filtered, label='oxygen saturation')
+			# plt.title("Oxygen Saturation")
+			# plt.xlabel("time")
+			# plt.ylabel("%")
 
-			plt.subplot(3, 1, 2)
-			plt.plot(heartrate_filtered, label='heartrate')
-			plt.title("Heart Rate (Lowpass Filter)")
-			plt.xlabel("time")
-			plt.ylabel("BPM")
+			# plt.subplot(3, 1, 2)
+			# plt.plot(heartrate_filtered, label='heartrate')
+			# plt.title("Heart Rate (Lowpass Filter)")
+			# plt.xlabel("time")
+			# plt.ylabel("BPM")
 
-			plt.subplot(3, 1, 3)
-			plt.plot(heartrate_convolved, label='heartrate')
-			plt.title("Heart Rate (Convolved)")
-			plt.xlabel("time")
-			plt.ylabel("BPM")
+			# plt.subplot(3, 1, 3)
+			# plt.plot(heartrate_convolved, label='heartrate')
+			# plt.title("Heart Rate (Convolved)")
+			# plt.xlabel("time")
+			# plt.ylabel("BPM")
 
-			plt.tight_layout()
-			plt.show()
+			# plt.tight_layout()
+			# plt.show()
+
+			count = 0
 	except struct.error:
 		print("Packet unpacking failed")
