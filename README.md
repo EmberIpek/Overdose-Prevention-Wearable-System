@@ -260,7 +260,7 @@ To do: split UDP and sensor code into separate files, define range for LEDs, PC 
 
 ## 7/7/2026
 
-Fixed UDP send bug when sending heart rate back to Pico (cast to int before sending). Pico now receives accurate averaged heart rate data and 7-seg display shows heart rate.
+Fixed UDP send bug when sending heart rate back to Pico (cast to int before sending). Pico now receives accurate averaged heart rate data and 7-seg display shows heart rate. Refactored code to handle SSEG display in separate file.
 
 Youtube demonstration:
 
