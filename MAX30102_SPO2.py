@@ -430,31 +430,6 @@ while True:
     new_hr = receive_packet()
     if(new_hr != None):
             current_hr = new_hr
-    ones = current_hr % 10
-    tens = (current_hr // 10) % 10
-    hundreds = (current_hr // 100) % 10
-    # show received heart rate on sseg display
-    seg, dig = SSEG_CC.show_sseg(ones, 3)
-#     seg, dig = SSEG_CC.show_sseg(0, 0)
-    for i in range(len(seg)):
-        segments[i].value(seg[i])
-    for i in range(len(dig)):
-        digits[i].value(dig[i])
-    utime.sleep_ms(5)
-    
-    if(tens > 0):
-        seg, dig = SSEG_CC.show_sseg(tens, 2)
-        for i in range(len(seg)):
-            segments[i].value(seg[i])
-        for i in range(len(dig)):
-            digits[i].value(dig[i])
-    utime.sleep_ms(5)
-    
-    if(hundreds > 0):
-        seg, dig = SSEG_CC.show_sseg(hundreds, 1)
-        for i in range(len(seg)):
-            segments[i].value(seg[i])
-        for i in range(len(dig)):
-            digits[i].value(dig[i])
-    utime.sleep_ms(5)
-#     utime.sleep_ms(10)
+            
+    # display on SSEG
+    SSEG_CC.show_sseg(current_hr, segments, digits)
