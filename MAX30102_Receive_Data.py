@@ -75,7 +75,7 @@ def plot_spectrum(Xv, fs, doStem=False):
 	else:
 		axp.plot(ff, np.angle(Xv)/np.pi)
 	axp.set_xlabel('Frequency (Hz)')
-	axp.set_ylabel('Phase (rad/$\pi$)')
+	axp.set_ylabel('Phase (rad/$pi$)')
 	axp.grid()
 
 	plt.show()
@@ -169,7 +169,7 @@ while True:
 			ir_samples.append(ir)
 			time_received.append(time.time())
 			if(not count % 10):
-				data = current_hr
+				data = int(current_hr)
 				packet = struct.pack(">i", data)
 				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
 		else:
@@ -211,13 +211,14 @@ while True:
 				spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
 			
 			if len(heartrate_list) > 15:
-				heartrate_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+				heartrate_filtered = lowpass_filter(heartrate_list, cutoff=0.4, fs=freq)
 				current_hr = heartrate_filtered[len(heartrate_filtered) - 1]
 
 			if(not count % 10):
-				data = current_hr
+				data = int(current_hr)
 				packet = struct.pack(">i", data)
 				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
+				print(".............................Data sent: ", current_hr)
     
 			# spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
 			# heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
