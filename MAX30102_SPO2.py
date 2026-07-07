@@ -1,11 +1,13 @@
 # Author: Ember Ipek
+#
 # 6/23/2026
 #
 # This initializes an I2C bus for a MAX30102 sensor, puts it in SpO2 mode,
 # and gets a temperature reading every 0.5 seconds. Helper functions are
 # included to set SpO2 sample rate, pulse width, ADC range, FIFO register,
 # and get temperature readings and red/IR LED data. Data is packed, checksum
-# is appended, and sent to PC for unpacking/processing over UDP.
+# is appended, and sent to PC for unpacking/processing over UDP. Processed
+# heart rate data received from PC and displayed on 7-seg display
 
 import machine
 import utime
@@ -34,7 +36,6 @@ seg_d = machine.Pin(9, machine.Pin.OUT)
 seg_e = machine.Pin(10, machine.Pin.OUT)
 seg_f = machine.Pin(11, machine.Pin.OUT)
 seg_g = machine.Pin(12, machine.Pin.OUT)
-seg_dp = machine.Pin(13, machine.Pin.OUT)
 
 digits = [dig_1,
           dig_2,
@@ -47,8 +48,7 @@ segments = [seg_a,
             seg_d,
             seg_e,
             seg_f,
-            seg_g,
-            seg_dp]
+            seg_g]
 
 ###################################################################
 # UDP setup
@@ -97,6 +97,8 @@ def receive_packet():
             data = ustruct.unpack(">i", packet)
             heartrate = data[0]
             print(".................................Heart rate received: ", heartrate)
+            
+            return heartrate
             
         except OSError:
             break
@@ -402,10 +404,15 @@ wlan = connect_wifi()
 current_hr = 0
 while True:
     wlan = maintain_wifi(wlan)
+    
+    # receive heartrate from packet
     count = 0
     while(count<10):
-        receive_packet()
+        new_hr = receive_packet()
+        if(new_hr != None):
+            current_hr = new_hr
         count += 1
+        
     # read the die temperature in Celsius
     temp_C = sensor.get_temp()
     red, ir = sensor.get_fifo_data()
@@ -414,12 +421,40 @@ while True:
 #     print("LED bytes hex: ", data.hex())
 #     print("LED bytes bin: ", bin(red), bin(ir))
     print("LED value red: ", red, ", IR: ", ir)
-    
     packet = pack_data(temp_C, red, ir)
     
     if wlan.isconnected():
         tx_sock.sendto(packet, (UDP_IP, TX_PORT))
         print("Packet sent! IP: ", wlan.ifconfig())
         
-    receive_packet()
+    new_hr = receive_packet()
+    if(new_hr != None):
+            current_hr = new_hr
+    ones = current_hr % 10
+    tens = (current_hr // 10) % 10
+    hundreds = (current_hr // 100) % 10
+    # show received heart rate on sseg display
+    seg, dig = SSEG_CC.show_sseg(ones, 3)
+#     seg, dig = SSEG_CC.show_sseg(0, 0)
+    for i in range(len(seg)):
+        segments[i].value(seg[i])
+    for i in range(len(dig)):
+        digits[i].value(dig[i])
+    utime.sleep_ms(5)
+    
+    if(tens > 0):
+        seg, dig = SSEG_CC.show_sseg(tens, 2)
+        for i in range(len(seg)):
+            segments[i].value(seg[i])
+        for i in range(len(dig)):
+            digits[i].value(dig[i])
+    utime.sleep_ms(5)
+    
+    if(hundreds > 0):
+        seg, dig = SSEG_CC.show_sseg(hundreds, 1)
+        for i in range(len(seg)):
+            segments[i].value(seg[i])
+        for i in range(len(dig)):
+            digits[i].value(dig[i])
+    utime.sleep_ms(5)
 #     utime.sleep_ms(10)
