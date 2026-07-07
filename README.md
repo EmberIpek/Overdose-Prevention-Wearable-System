@@ -45,8 +45,7 @@ Oxygenated and deoxygenated blood absorb different ratios of red and IR light: o
 
 ## Circuit Diagram
 
-<img width="975" height="414" alt="image" src="https://github.com/user-attachments/assets/7b568298-ab7e-44ae-a56a-6288bc93e31c" />
-
+<img width="975" height="706" alt="image" src="https://github.com/user-attachments/assets/27081de8-06b7-4a00-9d62-be0dac391a21" />
 
 ## Outcomes
 
@@ -107,7 +106,7 @@ mip.install("micropython-max30102")
 Updated schematic:
 <img width="975" height="414" alt="image" src="https://github.com/user-attachments/assets/d322f0c4-a48e-4ec4-8c53-13cf37722e81" />
 
-Available at: [https://www.circuitlab.com/editor/#?id=t8awrbw4623c]
+Available at: [https://www.circuitlab.com/editor/#?id=hh6msg7vwy5q]
 
 
 Mode configuration reg (0x09) starts in power down, must be set to 0x03 for SpO2 mode. Read Part ID reg (0xFF) to test I2C bus.
