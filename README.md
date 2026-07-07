@@ -258,9 +258,9 @@ Created separate file for 7-seg function. Wired and initialized segments. Filtfi
 
 To do: split UDP and sensor code into separate files, define range for LEDs, PC still sending back dummy values to Pico, send back the heart rate and SpO2 data. Average heart rate and SpO2 and send back every 100 iterations. Unpack on Pico and use to update display: truncate float to 4 significant digits
 
-# 7/7/2026
+## 7/7/2026
 
-Fixed UDP send bug when sending heart rate back to Pico (cast to int before sending). Pico now receives accurate averaged heart rate data and 7-seg display shows heart rate:
+Fixed UDP send bug when sending heart rate back to Pico (cast to int before sending). Pico now receives accurate averaged heart rate data and 7-seg display shows heart rate.
 
 Youtube demonstration:
 [![Watch the video](https://img.youtube.com/vi/7sWadJel9nA/default.jpg)](https://www.youtube.com/watch?v=7sWadJel9nA)
