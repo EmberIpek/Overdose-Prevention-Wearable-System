@@ -37,6 +37,7 @@ def lowpass_filter(samples, order=4, cutoff=0.4, fs=float):
     # clamp range if sampling below nyquist rate
     if(freq < (2 * cutoff)):
         cutoff = (freq/2) * 0.99
+        print("****************FREQ = ", freq, "*****************")
     
     b, a = signal.butter(N=order, Wn=cutoff, btype="lowpass", fs=freq)
     filtered_signal = signal.filtfilt(b, a, samples)
@@ -47,8 +48,10 @@ def bandpass_filter(samples, order=4, low=0.5, high=4.5, fs=float):
 	# clamp range if sampling below nyquist rate
     if(freq < (2 * high)):
         high = (freq/2) * 0.99
+        print("****************FREQ = ", freq, "*****************")
     if(high < low):
         low = 0.1
+        print("****************FREQ = ", freq, "*****************")
     
     b, a = signal.butter(N=order, Wn=(low, high), btype="bandpass", fs=freq)
     filtered_signal = signal.filtfilt(b, a, samples)
@@ -137,6 +140,10 @@ red_samples = deque(maxlen=2000)
 ir_samples = deque(maxlen=2000)
 time_received = deque(maxlen=2000)
 current_hr = 0
+current_spo2 = 0
+# filter for initial conditions
+low = 0.5
+high = 4.5
 
 print("Listening on port", RX_PORT)
 
@@ -157,10 +164,10 @@ while True:
 		ir = data[2]
 		checksum = data[3]
 		
-		print("UDP received! Temperature: ", temperature,
-			  ", Red LED: ", red,
-			  ", IR LED: ", ir,
-			  ", checksum: ", checksum)
+		# print("UDP received! Temperature: ", temperature,
+		# 	  ", Red LED: ", red,
+		# 	  ", IR LED: ", ir,
+		# 	  ", checksum: ", checksum)
 		
 		# receive first 2000 packets then graph
 		if(count < 100):
@@ -169,8 +176,9 @@ while True:
 			ir_samples.append(ir)
 			time_received.append(time.time())
 			if(not count % 10):
-				data = int(current_hr)
-				packet = struct.pack(">i", data)
+				hr_data = int(current_hr)
+				spo2_data = int(current_spo2)
+				packet = struct.pack(">ii", hr_data, spo2_data)
 				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
 		else:
 			# compute average sampling rate using time received
@@ -209,14 +217,16 @@ while True:
 			# make sure input length > padlen
 			if len(spo2) > 15:
 				spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+				current_spo2 = spo2_filtered[len(spo2_filtered) - 1]
 			
 			if len(heartrate_list) > 15:
 				heartrate_filtered = lowpass_filter(heartrate_list, cutoff=0.4, fs=freq)
 				current_hr = heartrate_filtered[len(heartrate_filtered) - 1]
 
 			if(not count % 10):
-				data = int(current_hr)
-				packet = struct.pack(">i", data)
+				hr_data = int(current_hr)
+				spo2_data = int(current_spo2)
+				packet = struct.pack(">ii", hr_data, spo2_data)
 				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
 				print(".............................Data sent: ", current_hr)
     
@@ -270,6 +280,11 @@ while True:
 			# plt.tight_layout()
 			# plt.show()
 
+			# update initial conditions for next batch
+			if(current_hr > 0 and (((1/current_hr) - 0.5) > 0.5)):
+				low = (1/current_hr) - 0.5
+			if(current_hr > 0 and (((1/current_hr) + 0.5) < 4.5)):
+				high = (1/current_hr) + 0.5
 			count = 0
 	except struct.error:
 		print("Packet unpacking failed")
