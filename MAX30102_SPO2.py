@@ -24,31 +24,57 @@ UDP_IP = "172.20.10.3"
 TX_PORT = 5005
 RX_PORT = 5006
 
-dig_1 = machine.Pin(0, machine.Pin.OUT)
-dig_2 = machine.Pin(1, machine.Pin.OUT)
-dig_3 = machine.Pin(2, machine.Pin.OUT)
-dig_4 = machine.Pin(3, machine.Pin.OUT)
+# SSEG 1
+dig_1_1 = machine.Pin(0, machine.Pin.OUT)
+dig_2_1 = machine.Pin(1, machine.Pin.OUT)
+dig_3_1 = machine.Pin(2, machine.Pin.OUT)
+# dig_4_1 = machine.Pin(3, machine.Pin.OUT)
 
-seg_a = machine.Pin(6, machine.Pin.OUT)
-seg_b = machine.Pin(7, machine.Pin.OUT)
-seg_c = machine.Pin(8, machine.Pin.OUT)
-seg_d = machine.Pin(9, machine.Pin.OUT)
-seg_e = machine.Pin(10, machine.Pin.OUT)
-seg_f = machine.Pin(11, machine.Pin.OUT)
-seg_g = machine.Pin(12, machine.Pin.OUT)
+seg_a_1 = machine.Pin(6, machine.Pin.OUT)
+seg_b_1 = machine.Pin(7, machine.Pin.OUT)
+seg_c_1 = machine.Pin(8, machine.Pin.OUT)
+seg_d_1 = machine.Pin(9, machine.Pin.OUT)
+seg_e_1 = machine.Pin(10, machine.Pin.OUT)
+seg_f_1 = machine.Pin(11, machine.Pin.OUT)
+seg_g_1 = machine.Pin(12, machine.Pin.OUT)
 
-digits = [dig_1,
-          dig_2,
-          dig_3,
-          dig_4]
+# SSEG 2
+dig_1_2 = machine.Pin(14, machine.Pin.OUT)
+dig_2_2 = machine.Pin(13, machine.Pin.OUT)
+dig_3_2 = machine.Pin(3, machine.Pin.OUT)
+# dig_4_2 = machine.Pin(3, machine.Pin.OUT)
 
-segments = [seg_a,
-            seg_b,
-            seg_c,
-            seg_d,
-            seg_e,
-            seg_f,
-            seg_g]
+seg_a_2 = machine.Pin(15, machine.Pin.OUT)
+seg_b_2 = machine.Pin(20, machine.Pin.OUT)
+seg_c_2 = machine.Pin(21, machine.Pin.OUT)
+seg_d_2 = machine.Pin(22, machine.Pin.OUT)
+seg_e_2 = machine.Pin(26, machine.Pin.OUT)
+seg_f_2 = machine.Pin(27, machine.Pin.OUT)
+seg_g_2 = machine.Pin(28, machine.Pin.OUT)
+
+digits_1 = [dig_1_1,
+            dig_2_1,
+            dig_3_1]
+
+segments_1 = [seg_a_1,
+              seg_b_1,
+              seg_c_1,
+              seg_d_1,
+              seg_e_1,
+              seg_f_1,
+              seg_g_1]
+
+digits_2 = [dig_1_2,
+            dig_2_2,
+            dig_3_2]
+
+segments_2 = [seg_a_2,
+              seg_b_2,
+              seg_c_2,
+              seg_d_2,
+              seg_e_2,
+              seg_f_2,
+              seg_g_2]
 
 ###################################################################
 # UDP setup
@@ -87,21 +113,22 @@ def calc_checksum(data):
     
     return checksum
 
-
 def receive_packet():
     while True:
         try:
             packet, addr = rx_sock.recvfrom(32)
             ## update display and LEDs
             # make unpack data/update display functions
-            data = ustruct.unpack(">i", packet)
+            data = ustruct.unpack(">ii", packet)
             heartrate = data[0]
+            spo2 = data[1]
             print(".................................Heart rate received: ", heartrate)
+            print(".................................SpO2 received: ", spo2)
             
-            return heartrate
+            return heartrate, spo2
             
         except OSError:
-            break
+            return None, None
 
 # packs data for transmission over UDP and appends checksum
 # > = big endian, f = float, i = signed int
@@ -402,34 +429,42 @@ rx_sock.setblocking(False)
 
 wlan = connect_wifi()
 current_hr = 0
+current_spo2 = 0
+
 while True:
     wlan = maintain_wifi(wlan)
     
     # receive heartrate from packet
     count = 0
     while(count<10):
-        new_hr = receive_packet()
+        new_hr, new_spo2 = receive_packet()
         if(new_hr != None):
             current_hr = new_hr
+        if(new_spo2 != None):
+            current_spo2 = new_spo2
         count += 1
         
     # read the die temperature in Celsius
     temp_C = sensor.get_temp()
     red, ir = sensor.get_fifo_data()
-    print("Die temperature: ", temp_C, "C")
+#     print("Die temperature: ", temp_C, "C")
 #     # debugging: print raw LED bytes
 #     print("LED bytes hex: ", data.hex())
 #     print("LED bytes bin: ", bin(red), bin(ir))
-    print("LED value red: ", red, ", IR: ", ir)
+#     print("LED value red: ", red, ", IR: ", ir)
     packet = pack_data(temp_C, red, ir)
     
     if wlan.isconnected():
         tx_sock.sendto(packet, (UDP_IP, TX_PORT))
-        print("Packet sent! IP: ", wlan.ifconfig())
+#         print("Packet sent! IP: ", wlan.ifconfig())
         
-    new_hr = receive_packet()
+    new_hr, new_spo2 = receive_packet()
     if(new_hr != None):
-            current_hr = new_hr
+        current_hr = new_hr
+    if(new_spo2 != None):
+        current_spo2 = new_spo2
             
     # display on SSEG
-    SSEG_CC.show_sseg(current_hr, segments, digits)
+    SSEG_CC.show_sseg(current_hr, segments_1, digits_1)
+#     utime.sleep_ms(1)
+    SSEG_CC.show_sseg(current_hr, segments_2, digits_2)
