@@ -18,10 +18,11 @@ SEG_EN = {0: (1,1,1,1,1,1,0),
           8: (1,1,1,1,1,1,1),
           9: (1,1,1,1,0,1,1)}
 
-DIG_EN = {0: (0,1,1,1),
-          1: (1,0,1,1),
-          2: (1,1,0,1),
-          3: (1,1,1,0)}
+DIG_EN = {0: (0,1,1),
+          1: (1,0,1),
+          2: (1,1,0),
+#           3: (1,1,1,0)
+          }
 
 def get_sseg_values(value=int, digit=int):
     '''
@@ -47,35 +48,35 @@ def show_sseg(num=int, segments=tuple, digits=tuple):
     hundreds = (num // 100) % 10
     thousands = (num // 1000) % 10
     
-    seg, dig = get_sseg_values(ones, 3)
+    seg, dig = get_sseg_values(ones, 2)
     for i in range(len(seg)):
         segments[i].value(seg[i])
     for i in range(len(dig)):
         digits[i].value(dig[i])
-    utime.sleep_ms(2)
+    utime.sleep_ms(0)
     
     if(tens > 0):
-        seg, dig = get_sseg_values(tens, 2)
+        seg, dig = get_sseg_values(tens, 1)
         for i in range(len(seg)):
             segments[i].value(seg[i])
         for i in range(len(dig)):
             digits[i].value(dig[i])
-    utime.sleep_ms(5)
+    utime.sleep_ms(20)
     
     if(hundreds > 0):
-        seg, dig = get_sseg_values(hundreds, 1)
+        seg, dig = get_sseg_values(hundreds, 0)
         for i in range(len(seg)):
             segments[i].value(seg[i])
         for i in range(len(dig)):
             digits[i].value(dig[i])
-    utime.sleep_ms(1)
+    utime.sleep_ms(20)
     
-    if(thousands > 0):
-        seg, dig = get_sseg_values(thousands, 0)
-        for i in range(len(seg)):
-            segments[i].value(seg[i])
-        for i in range(len(dig)):
-            digits[i].value(dig[i])
-    utime.sleep_ms(1)
+#     if(thousands > 0):
+#         seg, dig = get_sseg_values(thousands, 0)
+#         for i in range(len(seg)):
+#             segments[i].value(seg[i])
+#         for i in range(len(dig)):
+#             digits[i].value(dig[i])
+#     utime.sleep_ms(1)
     
     return
