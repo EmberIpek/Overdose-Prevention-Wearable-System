@@ -45,7 +45,7 @@ Oxygenated and deoxygenated blood absorb different ratios of red and IR light: o
 
 ## Circuit Diagram
 
-<img width="975" height="706" alt="image" src="https://github.com/user-attachments/assets/27081de8-06b7-4a00-9d62-be0dac391a21" />
+<img width="975" height="806" alt="image" src="https://github.com/user-attachments/assets/cac3f5f1-e251-45e0-ab24-3a77753f9c4e" />
 
 ## Outcomes
 
@@ -68,7 +68,7 @@ Secondary:
 
 # Progress Notes
 
-## 6/19/2026
+### 6/19/2026
 
 MAX30102 heart rate/oxygen saturation module obtained. Communicates through I2C protocol, sigma-delta ADC is integrated within module. Since the module supports IRQ and interrupts (active low INT pin), it is possible to use an ISR when an interrupt flag is raised by a low oxygen/heart rate event. Connect Vdd with bypass capacitor to GND.
 
@@ -92,7 +92,7 @@ Part ID: 0xFF
 
 Device address: 0x57
 
-## 6/23/2026
+### 6/23/2026
 
 Soldered pins onto Pi Pico board, will use Pico to send biometric data to Pi. Machine.I2C documentation read: [https://docs.micropython.org/en/latest/library/machine.I2C.html]
 Wired sensor and set up I2C communication on Pi Pico. Will use upython MAX30102 library.
@@ -113,7 +113,7 @@ Mode configuration reg (0x09) starts in power down, must be set to 0x03 for SpO2
 
 To do: read MAX30102 upython documentation, set up polling for FIFO buffer reg (0x07)
 
-## 6/24/2026
+### 6/24/2026
 
 Initialized sensor to use MAX30102 library and added a loop to continuously read temperature. Pressing sensor against skin results in readings steadily increasing to body temperature, verifying operation.
 
@@ -139,7 +139,7 @@ Die Temp Config: 0x21 [0]
 
 To do: read red and IR LED values, plot using matplotlib, pass through numpy butterworth low pass filter to filter out electrical jitter/high freq noise
 
-## 6/25/2026
+### 6/25/2026
 
 LED pulse width setter function created (register 0x0A bits 1:0). **Sample rate sets upper limit on pulse width time and ADC resolution is determined by pulse width:** 
 
@@ -155,7 +155,7 @@ Temperature data registers 0x1F-0x21:
  
 Temperature integer value represented in big endian 2’s complement format. Fractional value incremented in multiples of 0.0625. Temperature config register bit 0 set to 1 to read temperature and is automatically cleared.
 
-## 6/26/2026
+### 6/26/2026
 
 Modified code to connect to send packets through UDP. Made socket and wlan global and initialized outside of sensor for better separation of concerns. 
 Reading the FIFO_DATA register (0x07) does not automatically increment the register address. Maximum sample rate for ADC depends on pulse width. For 118us, ADC resolution is 16 bits. FIFO register should be read in 3-byte bursts. For SpO2 mode, one sample requires 6-byte reads.
@@ -168,7 +168,7 @@ Setter function for sample averaging implemented and set to 8 by default. Bit 4 
 
 To do: eventually move all SpO2 functions to a separate file. Accidentally ended up writing an entire driver for this module, so might as well use it as one.
 
-## 6/29/2026
+### 6/29/2026
 
 Refactored code to create a MAX30102 class for future driver implementation. Created function to read FIFO data in 6-byte bursts for SpO2 mode. Samples are transmitted in a 24-bit field, with the upper six bits unused. When operating at less than 18-bit resolution, the valid ADC bits remain aligned to the most significant end of the 18-bit field:
 
@@ -178,7 +178,7 @@ FIFO read and write pointers cleared upon setting SpO2 mode, as instructed in th
 
 To do: use matplotlib to graph red and IR LED data, apply low pass filter.
 
-## 6/30/2026
+### 6/30/2026
 
 Sensor receiver code modified to graph first 1000 samples of IR and LED data received. Graph shows small, consistent spikes in data values when heart beats. Will verify further by increasing data transmission rate and testing for changes after exercise. Increasing transmission rate results in cleaner readings:
 
@@ -198,7 +198,7 @@ To do: throw exception if transmission rate drops below threshold. Try filtfilt,
 
 Acknowledgements: plot_spectrum() function from ECE201 Signals and Systems, Dr. Bernd-Peter Paris, George Mason University.
 
-## 7/1/2026
+### 7/1/2026
 
 Bandpass filter moved to separate function, filtered signal plotted against normalized raw values, passed through SciPy filtfilt to obtain clean AC sample:
 
@@ -221,7 +221,7 @@ $$
 
 To do: find peak values to calculate bpm, read SciPy signal.find_peaks documentation, calculate ratio correctly, use np.mean for DC component.
 
-## 7/2/2026
+### 7/2/2026
 
 Signal.find_peaks documentation read. Np.mean used for calculating DC component of ratio and RMS for AC, lowpass filter result kept for extracting AC data. Cast list into np array and used formula to convert ratio to SpO2 estimation:
 
@@ -234,7 +234,7 @@ Measured peaks with signal.find_peaks and plotted. Light exercise while holding 
 
 To do: Use np.convolve or apply lowpass filter to resulting ratio to smooth before calculating SpO2.
 
-## 7/3/2026
+### 7/3/2026
 
 O2 and heart rate signal cleaned up with further signal processing, low pass filter compared with convolution:
 
@@ -248,7 +248,7 @@ Use PC to send data back to Pico (dummy data for now). Turned sample lists into 
 
 To do: Define packet, with status bits for low SpO2, tachycardia, and bradycardia. Unpack on Pico and update 7-seg displays and LEDs
 
-## 7/6/2026
+### 7/6/2026
 
 Updated circuit diagram for 7-seg display:
 
@@ -258,7 +258,7 @@ Created separate file for 7-seg function. Wired and initialized segments. Filtfi
 
 To do: split UDP and sensor code into separate files, define range for LEDs, PC still sending back dummy values to Pico, send back the heart rate and SpO2 data. Average heart rate and SpO2 and send back every 100 iterations. Unpack on Pico and use to update display: truncate float to 4 significant digits
 
-## 7/7/2026
+### 7/7/2026
 
 Fixed UDP send bug when sending heart rate back to Pico (cast to int before sending). Pico now receives accurate averaged heart rate data and 7-seg display shows heart rate. Refactored code to handle SSEG display in separate file.
 
@@ -267,3 +267,13 @@ Youtube demonstration:
 [![Watch the video](https://img.youtube.com/vi/7sWadJel9nA/default.jpg)](https://www.youtube.com/watch?v=7sWadJel9nA)
 
 To do: processing lags behind sent/received data, must resync at regular intervals.
+
+### 7/8/2026
+
+Added second SSEG display and added code to send SpO2 data back to Pico. Circuit diagram updated for second SSEG display and LEDs:
+
+<img width="975" height="806" alt="image" src="https://github.com/user-attachments/assets/8fe98517-f34a-4280-9174-ecf2bca64714" />
+
+Debugging with print statements to determine if sampling rate goes below Nyquist rate for filters. Display 10s and 100s place is very dim and flickering, wiring for digits mixed up. Fix in next iteration.
+
+To do: add code to light LEDs based on heart rate and SpO2. Professor suggested using stateful filters with previous batch values to determine bandpass filter cutoffs, experiment with using initial conditions based on previous states.
