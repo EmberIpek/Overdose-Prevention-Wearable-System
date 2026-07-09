@@ -277,3 +277,17 @@ Added second SSEG display and added code to send SpO2 data back to Pico. Circuit
 Debugging with print statements to determine if sampling rate goes below Nyquist rate for filters. Display 10s and 100s place is very dim and flickering, wiring for digits mixed up. Fix in next iteration.
 
 To do: add code to light LEDs based on heart rate and SpO2. Professor suggested using stateful filters with previous batch values to determine bandpass filter cutoffs, experiment with using initial conditions based on previous states.
+
+### 7/9/2026
+
+Fixed 7-segment display bug and updated circuit diagram. Implemented LED functionality.
+
+<img width="975" height="816" alt="image" src="https://github.com/user-attachments/assets/47dd6b3f-cdb4-44d9-9f57-0572c3805ffd" />
+
+Youtube demonstration:
+
+[![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/default.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
+
+<a href="https://www.youtube.com/watch?v=-ZItoqglV_4" target="_blank">
+  <img src="https://www.youtube.com/watch?v=-ZItoqglV_4" alt="Watch the video" width="600" />
+</a>
