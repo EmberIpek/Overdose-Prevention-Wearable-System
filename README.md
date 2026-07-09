@@ -264,7 +264,7 @@ Fixed UDP send bug when sending heart rate back to Pico (cast to int before send
 
 Youtube demonstration:
 
-[![Watch the video](https://img.youtube.com/vi/7sWadJel9nA/default.jpg)](https://www.youtube.com/watch?v=7sWadJel9nA)
+[![Watch the video](https://img.youtube.com/vi/7sWadJel9nA/hqdefault.jpg)](https://www.youtube.com/watch?v=7sWadJel9nA)
 
 To do: processing lags behind sent/received data, must resync at regular intervals.
 
@@ -286,4 +286,4 @@ Fixed 7-segment display bug and updated circuit diagram. Implemented LED functio
 
 Youtube demonstration:
 
-[![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/maxresdefault.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
+[![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/hqdefault.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
