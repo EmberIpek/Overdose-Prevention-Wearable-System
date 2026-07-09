@@ -288,6 +288,8 @@ Youtube demonstration:
 
 [![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/default.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
 
-<a href="https://www.youtube.com/watch?v=-ZItoqglV_4" target="_blank">
-  <img src="https://www.youtube.com/watch?v=-ZItoqglV_4" width="600" />
-</a>
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=-ZItoqglV_4" target="_blank">
+    <img src="https://youtube.com" alt="Watch the video" width="600">
+  </a>
+</p>
