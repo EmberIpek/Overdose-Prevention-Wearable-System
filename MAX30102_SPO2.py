@@ -7,7 +7,8 @@
 # included to set SpO2 sample rate, pulse width, ADC range, FIFO register,
 # and get temperature readings and red/IR LED data. Data is packed, checksum
 # is appended, and sent to PC for unpacking/processing over UDP. Processed
-# heart rate data received from PC and displayed on 7-seg display
+# heart rate/SpO2 data received from PC and displayed on 7-seg display.
+# LEDs show safe/unsafe range.
 
 import machine
 import utime
@@ -15,7 +16,7 @@ import network
 import socket
 import ustruct
 import SSEG_CC
-# from max30102 import MAX30102
+import _thread
 
 SPO2_SDA = machine.Pin(4)
 SPO2_SCL = machine.Pin(5)
@@ -24,10 +25,16 @@ UDP_IP = "172.20.10.3"
 TX_PORT = 5005
 RX_PORT = 5006
 
+# LEDs
+green_led_hr = machine.Pin(16, machine.Pin.OUT)
+red_led_hr = machine.Pin(18, machine.Pin.OUT)
+green_led_spo2 = machine.Pin(17, machine.Pin.OUT)
+red_led_spo2 = machine.Pin(19, machine.Pin.OUT)
+
 # SSEG 1
-dig_1_1 = machine.Pin(0, machine.Pin.OUT)
-dig_2_1 = machine.Pin(1, machine.Pin.OUT)
-dig_3_1 = machine.Pin(2, machine.Pin.OUT)
+dig_1_1 = machine.Pin(1, machine.Pin.OUT)
+dig_2_1 = machine.Pin(2, machine.Pin.OUT)
+dig_3_1 = machine.Pin(0, machine.Pin.OUT)
 # dig_4_1 = machine.Pin(3, machine.Pin.OUT)
 
 seg_a_1 = machine.Pin(6, machine.Pin.OUT)
@@ -39,9 +46,9 @@ seg_f_1 = machine.Pin(11, machine.Pin.OUT)
 seg_g_1 = machine.Pin(12, machine.Pin.OUT)
 
 # SSEG 2
-dig_1_2 = machine.Pin(14, machine.Pin.OUT)
-dig_2_2 = machine.Pin(13, machine.Pin.OUT)
-dig_3_2 = machine.Pin(3, machine.Pin.OUT)
+dig_1_2 = machine.Pin(13, machine.Pin.OUT)
+dig_2_2 = machine.Pin(3, machine.Pin.OUT)
+dig_3_2 = machine.Pin(14, machine.Pin.OUT)
 # dig_4_2 = machine.Pin(3, machine.Pin.OUT)
 
 seg_a_2 = machine.Pin(15, machine.Pin.OUT)
@@ -82,8 +89,8 @@ segments_2 = [seg_a_2,
 
 def connect_wifi():
     # connect to hotspot
-    ssid = "SSID"
-    password = "PASSWORD"
+    ssid = "FBI Surveillance Van #7"
+    password = "PeepeePoopoo"
     timeout = 20
     wlan = network.WLAN(network.WLAN.IF_STA)
     wlan.active(True)
@@ -466,5 +473,19 @@ while True:
             
     # display on SSEG
     SSEG_CC.show_sseg(current_hr, segments_1, digits_1)
-#     utime.sleep_ms(1)
-    SSEG_CC.show_sseg(current_hr, segments_2, digits_2)
+    SSEG_CC.show_sseg(current_spo2, segments_2, digits_2)
+    
+    # LEDs
+    if(current_hr > 150) or (current_hr < 50):
+        green_led_hr.value(0)
+        red_led_hr.value(1)
+    else:
+        green_led_hr.value(1)
+        red_led_hr.value(0)
+    
+    if(current_spo2 < 90):
+        green_led_spo2.value(0)
+        red_led_spo2.value(1)
+    else:
+        green_led_spo2.value(1)
+        red_led_spo2.value(0)
