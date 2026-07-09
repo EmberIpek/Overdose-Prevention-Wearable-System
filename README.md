@@ -286,4 +286,4 @@ Fixed 7-segment display bug and updated circuit diagram. Implemented LED functio
 
 Youtube demonstration:
 
-[![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/default.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
+[![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/maxresdefault.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
