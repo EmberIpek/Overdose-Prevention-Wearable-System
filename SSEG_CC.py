@@ -53,7 +53,7 @@ def show_sseg(num=int, segments=tuple, digits=tuple):
         segments[i].value(seg[i])
     for i in range(len(dig)):
         digits[i].value(dig[i])
-    utime.sleep_ms(0)
+    utime.sleep_ms(2)
     
     if(tens > 0):
         seg, dig = get_sseg_values(tens, 1)
@@ -61,7 +61,7 @@ def show_sseg(num=int, segments=tuple, digits=tuple):
             segments[i].value(seg[i])
         for i in range(len(dig)):
             digits[i].value(dig[i])
-    utime.sleep_ms(20)
+    utime.sleep_ms(2)
     
     if(hundreds > 0):
         seg, dig = get_sseg_values(hundreds, 0)
@@ -69,7 +69,7 @@ def show_sseg(num=int, segments=tuple, digits=tuple):
             segments[i].value(seg[i])
         for i in range(len(dig)):
             digits[i].value(dig[i])
-    utime.sleep_ms(20)
+    utime.sleep_ms(2)
     
 #     if(thousands > 0):
 #         seg, dig = get_sseg_values(thousands, 0)
