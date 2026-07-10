@@ -287,3 +287,12 @@ Fixed 7-segment display bug and updated circuit diagram. Implemented LED functio
 Youtube demonstration:
 
 [![Watch the video](https://img.youtube.com/vi/-ZItoqglV_4/hqdefault.jpg)](https://www.youtube.com/watch?v=-ZItoqglV_4)
+
+To do: Heart rate occasionally creeps up, determine reason.
+
+### 7/10/2026
+
+Encountered negative heart rate value bug. Made sure calculated heart rate always > 0 before sending to Pico, discarded otherwise. Updated 7-seg refresh rate for smoother display. Heart rate update was lagging/exploding when finger taken off sensor briefly. Estimate was based on last 2000 samples, shortened maxlen to 800 to ensure more recent samples are used. Stateful band pass filter attempted, but is suboptimal when sensor loses contact with skin.
+
+To do: heart rate 7-seg display does not display the digit ‘0’. Double check wiring. Sensor has difficulty receiving data from subject with darker skin tone, must find way to recalibrate based on skin tone. Implement multithreading with one core continuously sending samples and other core receiving. Add minimum height/other parameters for find_peaks.
+
