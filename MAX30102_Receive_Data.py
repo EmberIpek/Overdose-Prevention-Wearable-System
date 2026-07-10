@@ -34,29 +34,29 @@ def rms(window):
 # For lowpass and highpass filters, Wn is a scalar;
 # for bandpass and bandstop filters, Wn is a length-2 sequence.
 def lowpass_filter(samples, order=4, cutoff=0.4, fs=float):
-    # clamp range if sampling below nyquist rate
-    if(freq < (2 * cutoff)):
-        cutoff = (freq/2) * 0.99
-        print("****************FREQ = ", freq, "*****************")
-    
-    b, a = signal.butter(N=order, Wn=cutoff, btype="lowpass", fs=freq)
-    filtered_signal = signal.filtfilt(b, a, samples)
-    
-    return filtered_signal
+	# clamp range if sampling below nyquist rate
+	if(freq < (2 * cutoff)):
+		cutoff = (freq/2) * 0.99
+		print("****************FREQ = ", freq, "*****************")
+	
+	b, a = signal.butter(N=order, Wn=cutoff, btype="lowpass", fs=freq)
+	filtered_signal = signal.filtfilt(b, a, samples)
+	
+	return filtered_signal
 
 def bandpass_filter(samples, order=4, low=0.5, high=4.5, fs=float):
 	# clamp range if sampling below nyquist rate
-    if(freq < (2 * high)):
-        high = (freq/2) * 0.99
-        print("****************FREQ = ", freq, "*****************")
-    if(high < low):
-        low = 0.1
-        print("****************FREQ = ", freq, "*****************")
-    
-    b, a = signal.butter(N=order, Wn=(low, high), btype="bandpass", fs=freq)
-    filtered_signal = signal.filtfilt(b, a, samples)
-    
-    return filtered_signal
+	if(freq < (2 * high)):
+		high = (freq/2) * 0.99
+		print("****************FREQ = ", freq, "*****************")
+	if(high < low):
+		low = 0.1
+		print("****************FREQ = ", freq, "*****************")
+	
+	b, a = signal.butter(N=order, Wn=(low, high), btype="bandpass", fs=freq)
+	filtered_signal = signal.filtfilt(b, a, samples)
+	
+	return filtered_signal
 
 def plot_spectrum(Xv, fs, doStem=False):
 	"""Plot magnitude and phase of the spectrum"""
@@ -136,12 +136,13 @@ count = 0
 # red_samples = []
 # ir_samples = []
 # time_received = []
-red_samples = deque(maxlen=2000)
-ir_samples = deque(maxlen=2000)
-time_received = deque(maxlen=2000)
+red_samples = deque(maxlen=800)
+ir_samples = deque(maxlen=800)
+time_received = deque(maxlen=800)
 current_hr = 0
 current_spo2 = 0
-# filter for initial conditions
+
+# filter initial conditions
 low = 0.5
 high = 4.5
 
@@ -163,11 +164,6 @@ while True:
 		red = data[1]
 		ir = data[2]
 		checksum = data[3]
-		
-		# print("UDP received! Temperature: ", temperature,
-		# 	  ", Red LED: ", red,
-		# 	  ", IR LED: ", ir,
-		# 	  ", checksum: ", checksum)
 		
 		# receive first 2000 packets then graph
 		if(count < 100):
@@ -201,8 +197,9 @@ while True:
 			# filtered_red = signal.sosfilt(bp_filter, red_samples)
 
 			# Digital filter critical frequencies must be 0 < Wn < fs/2
-			filtered_red_AC = bandpass_filter(np_red_AC, fs=freq)
-			filtered_ir_AC = bandpass_filter(np_ir_AC, fs=freq)
+			# Stateful bandpass filter
+			filtered_red_AC = bandpass_filter(np_red_AC, low=low, high=high, fs=freq)
+			filtered_ir_AC = bandpass_filter(np_ir_AC, low=low, high=high, fs=freq)
 
 			# these should be RMS values within a windowed segment (2s)
 
@@ -222,14 +219,19 @@ while True:
 			if len(heartrate_list) > 15:
 				heartrate_filtered = lowpass_filter(heartrate_list, cutoff=0.4, fs=freq)
 				current_hr = heartrate_filtered[len(heartrate_filtered) - 1]
+    
+			else:
+				print("********************** LEN <= PADLEN ***********************")
 
 			if(not count % 10):
-				hr_data = int(current_hr)
-				spo2_data = int(current_spo2)
+				if(current_hr > 0):
+					hr_data = int(current_hr)
+				if(current_spo2 > 0):
+					spo2_data = int(current_spo2)
 				packet = struct.pack(">ii", hr_data, spo2_data)
 				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
 				print(".............................Data sent: ", current_hr)
-    
+	
 			# spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
 			# heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
 			# heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
@@ -281,10 +283,10 @@ while True:
 			# plt.show()
 
 			# update initial conditions for next batch
-			if(current_hr > 0 and (((1/current_hr) - 0.5) > 0.5)):
-				low = (1/current_hr) - 0.5
-			if(current_hr > 0 and (((1/current_hr) + 0.5) < 4.5)):
-				high = (1/current_hr) + 0.5
+			# if(current_hr > 0 and (((1/current_hr) - 0.5) > 0.5)):
+			# 	low = (1/current_hr) - 0.5
+			# if(current_hr > 0 and (((1/current_hr) + 0.5) < 4.5)):
+			# 	high = (1/current_hr) + 0.5
 			count = 0
 	except struct.error:
 		print("Packet unpacking failed")
