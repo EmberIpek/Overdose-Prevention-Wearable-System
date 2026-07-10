@@ -3,6 +3,7 @@
 # 7/6/2026
 #
 # Values for common cathode SSEG displays
+# To do: support for different numbers of digits
 
 import machine
 import utime
@@ -61,7 +62,7 @@ def show_sseg(num=int, segments=tuple, digits=tuple):
             segments[i].value(seg[i])
         for i in range(len(dig)):
             digits[i].value(dig[i])
-    utime.sleep_ms(2)
+    utime.sleep_ms(5)
     
     if(hundreds > 0):
         seg, dig = get_sseg_values(hundreds, 0)
