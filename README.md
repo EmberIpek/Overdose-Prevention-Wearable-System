@@ -296,3 +296,6 @@ Encountered negative heart rate value bug. Made sure calculated heart rate alway
 
 To do: heart rate 7-seg display does not display the digit ‘0’. Double check wiring. Sensor has difficulty receiving data from subject with darker skin tone, must find way to recalibrate based on skin tone. Implement multithreading with one core continuously sending samples and other core receiving. Add minimum height/other parameters for find_peaks.
 
+### 7/14/2026
+
+Refactored code to handle UDP send/receive through separate class. Read python threading documentation. Pi Pico CPU contains two cores: one will be used to collect sensor data and send, other will be for receiving and displaying processed result on SSEG display.
