@@ -8,7 +8,7 @@
 # and get temperature readings and red/IR LED data. Data is packed, checksum
 # is appended, and sent to PC for unpacking/processing over UDP. Processed
 # heart rate/SpO2 data received from PC and displayed on 7-seg display.
-# LEDs show safe/unsafe range.
+# LEDs indicate safe/unsafe range.
 
 import machine
 import utime
@@ -17,6 +17,7 @@ import socket
 import ustruct
 import SSEG_CC
 import _thread
+from UDP import UDP
 
 SPO2_SDA = machine.Pin(4)
 SPO2_SCL = machine.Pin(5)
@@ -82,69 +83,6 @@ segments_2 = [seg_a_2,
               seg_e_2,
               seg_f_2,
               seg_g_2]
-
-###################################################################
-# UDP setup
-###################################################################
-
-def connect_wifi():
-    # connect to hotspot
-    ssid = "FBI Surveillance Van #7"
-    password = "PeepeePoopoo"
-    timeout = 20
-    wlan = network.WLAN(network.WLAN.IF_STA)
-    wlan.active(True)
-    wlan.connect(ssid, password)
-    
-    while not wlan.isconnected() and timeout > 0:
-        utime.sleep(0.5)
-        timeout -= 1
-        
-    if wlan.isconnected():
-        print("Connected to Wi-Fi: ", wlan.ifconfig())
-    
-    return wlan
-
-# maintain wifi connection
-def maintain_wifi(wlan):
-    if not wlan.isconnected():
-        print("Wi-Fi lost, reconnecting...")
-        wlan = connect_wifi()
-    
-    return wlan
-
-def calc_checksum(data):
-    checksum = 0
-    for byte in data:
-        checksum ^= byte
-    
-    return checksum
-
-def receive_packet():
-    while True:
-        try:
-            packet, addr = rx_sock.recvfrom(32)
-            ## update display and LEDs
-            # make unpack data/update display functions
-            data = ustruct.unpack(">ii", packet)
-            heartrate = data[0]
-            spo2 = data[1]
-            print(".................................Heart rate received: ", heartrate)
-            print(".................................SpO2 received: ", spo2)
-            
-            return heartrate, spo2
-            
-        except OSError:
-            return None, None
-
-# packs data for transmission over UDP and appends checksum
-# > = big endian, f = float, i = signed int
-def pack_data(temperature, red, ir):
-    packet = ustruct.pack(">fii", temperature, red, ir)
-    checksum = calc_checksum(packet)
-    packet += ustruct.pack(">H", checksum)
-    
-    return packet
 
 ###################################################################
 # SpO2 class
@@ -430,21 +368,19 @@ sensor.spo2_setup()
 
 tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+udp = UDP(tx_sock=tx_sock, rx_sock=rx_sock, udp_ip=UDP_IP)
+wlan = udp.connect_wifi()
 
-rx_sock.bind(("0.0.0.0", 5006))
-rx_sock.setblocking(False)
-
-wlan = connect_wifi()
 current_hr = 0
 current_spo2 = 0
 
 while True:
-    wlan = maintain_wifi(wlan)
+    wlan = udp.maintain_wifi(wlan)
     
     # receive heartrate from packet
     count = 0
     while(count<10):
-        new_hr, new_spo2 = receive_packet()
+        new_hr, new_spo2 = udp.receive_packet()
         if(new_hr != None):
             current_hr = new_hr
         if(new_spo2 != None):
@@ -459,13 +395,13 @@ while True:
 #     print("LED bytes hex: ", data.hex())
 #     print("LED bytes bin: ", bin(red), bin(ir))
 #     print("LED value red: ", red, ", IR: ", ir)
-    packet = pack_data(temp_C, red, ir)
-    
-    if wlan.isconnected():
-        tx_sock.sendto(packet, (UDP_IP, TX_PORT))
+    packet = udp.pack_data(temp_C, red, ir)
+    udp.send_data(packet)
+#     if wlan.isconnected():
+#         tx_sock.sendto(packet, (UDP_IP, TX_PORT))
 #         print("Packet sent! IP: ", wlan.ifconfig())
         
-    new_hr, new_spo2 = receive_packet()
+    new_hr, new_spo2 = udp.receive_packet()
     if(new_hr != None):
         current_hr = new_hr
     if(new_spo2 != None):
@@ -473,6 +409,7 @@ while True:
             
     # display on SSEG
     SSEG_CC.show_sseg(current_hr, segments_1, digits_1)
+#     utime.sleep_ms(1)
     SSEG_CC.show_sseg(current_spo2, segments_2, digits_2)
     
     # LEDs
