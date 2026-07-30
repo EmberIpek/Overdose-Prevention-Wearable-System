@@ -302,7 +302,7 @@ Refactored code to handle UDP send/receive through separate class. Read python t
 
 ### 7/29/2026
 
-Obtained ST7735 display screen, communicates through SPI. Used boochow’s ST7735 driver and sysfont.py. Test code written for LED display.
+Obtained ST7735 display screen, communicates through SPI. Used boochow’s ST7735 driver and sysfont.py. Test code written for LED display. 7-seg displays exchanged for sleeker LED display.
 
 #### Dependencies & Credits - This project utilizes the following open-source libraries: 
 
