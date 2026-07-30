@@ -299,3 +299,13 @@ To do: heart rate 7-seg display does not display the digit ‘0’. Double check
 ### 7/14/2026
 
 Refactored code to handle UDP send/receive through separate class. Read python threading documentation. Pi Pico CPU contains two cores: one will be used to collect sensor data and send, other will be for receiving and displaying processed result on SSEG display.
+
+### 7/29/2026
+
+Obtained ST7735 display screen, communicates through SPI. Used boochow’s ST7735 driver and sysfont.py. Test code written for LED display.
+
+#### Dependencies & Credits - This project utilizes the following open-source libraries: 
+
+**ST7735 Display Driver**: Written by [boochow]( https://github.com/boochow/MicroPython-ST7735/blob/master/ST7735.py). 
+
+**System Font Driver**: Adapted from the [cheungbx repository](https://github.com).
