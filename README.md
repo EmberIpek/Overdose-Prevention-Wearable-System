@@ -308,4 +308,4 @@ Obtained ST7735 display screen, communicates through SPI. Used boochow’s ST773
 
 **ST7735 Display Driver**: Written by [boochow]( https://github.com/boochow/MicroPython-ST7735/blob/master/ST7735.py). 
 
-**System Font Driver**: Adapted from the [cheungbx repository](https://github.com).
+**System Font Driver**: Adapted from [cheungbx](https://github.com/cheungbx/st7735-esp8266-micropython/blob/master/sysfont.py).
