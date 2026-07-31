@@ -17,7 +17,7 @@ import numpy as np
 from collections import deque
 
 UDP_IP = "0.0.0.0"
-PICO_IP = "172.20.10.10"
+PICO_IP = "172.20.10.11"
 TX_PORT = 5006
 RX_PORT = 5005
 
@@ -81,6 +81,58 @@ def plot_spectrum(Xv, fs, doStem=False):
 	axp.set_ylabel('Phase (rad/$pi$)')
 	axp.grid()
 
+	plt.show()
+
+def plot_AC(filtered_red_AC, filtered_ir_AC, window):
+	# spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
+	# heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
+	# heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
+	# current_hr = heartrate_convolved[len(heartrate_convolved) - 1]
+	
+	# plot_spectrum(filtered_red_AC, fs=freq)
+
+	# time axis
+	t = np.arange(len(filtered_red_AC)) / freq
+	t_o2 = t[window:] - (window / (2 * freq))
+
+	plt.figure(figsize=(10, 6))
+
+	# AC component
+	plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
+	plt.plot(t, np_red_AC, label='Red Samples')
+	plt.plot(t, filtered_ir_AC, label='Filtered IR Samples')
+	plt.plot(t, np_ir_AC, label='IR Samples')
+
+	# # DC component
+	# plt.plot(t, np_red_DC, label='Red DC')
+	# plt.plot(t, np_ir_DC, label='IR DC')
+
+	# # Ratio
+	# plt.plot(t, ratio_red, label='Red Ratio')
+	# plt.plot(t, ratio_ir, label='IR Ratio')
+	# plt.plot(t_R, ratio, label='ratio')
+
+	# # SpO2 saturation
+	# plt.subplot(3, 1, 1)
+	# plt.plot(spo2_filtered, label='oxygen saturation')
+	# plt.title("Oxygen Saturation")
+	# plt.xlabel("time")
+	# plt.ylabel("%")
+
+	# # Heartrate
+	# plt.subplot(3, 1, 2)
+	# plt.plot(heartrate_filtered, label='heartrate')
+	# plt.title("Heart Rate (Lowpass Filter)")
+	# plt.xlabel("time")
+	# plt.ylabel("BPM")
+
+	# plt.subplot(3, 1, 3)
+	# plt.plot(heartrate_convolved, label='heartrate')
+	# plt.title("Heart Rate (Convolved)")
+	# plt.xlabel("time")
+	# plt.ylabel("BPM")
+
+	# plt.tight_layout()
 	plt.show()
 
 #############################################################
@@ -172,10 +224,11 @@ while True:
 			ir_samples.append(ir)
 			time_received.append(time.time())
 			if(not count % 10):
-				hr_data = int(current_hr)
-				spo2_data = int(current_spo2)
-				packet = struct.pack(">ii", hr_data, spo2_data)
-				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
+				if(not np.isnan(current_hr) and not np.isnan(current_spo2)):
+					hr_data = int(current_hr)
+					spo2_data = int(current_spo2)
+					packet = struct.pack(">ii", hr_data, spo2_data)
+					tx_sock.sendto(packet, (PICO_IP, TX_PORT))
 		else:
 			# compute average sampling rate using time received
 			dt = np.diff(time_received)
@@ -209,7 +262,9 @@ while True:
 
 			ratio = np.array(get_ratio(freq))
 			spo2 = 104.0 - (17.0 * ratio)
-			heartrate_list = get_heartrate()
+			# find_peaks distance must be >= 1
+			if(int(freq * 0.4) >= 1):
+				heartrate_list = get_heartrate()
 
 			# make sure input length > padlen
 			if len(spo2) > 15:
@@ -219,7 +274,7 @@ while True:
 			if len(heartrate_list) > 15:
 				heartrate_filtered = lowpass_filter(heartrate_list, cutoff=0.4, fs=freq)
 				current_hr = heartrate_filtered[len(heartrate_filtered) - 1]
-    
+	
 			else:
 				print("********************** LEN <= PADLEN ***********************")
 
@@ -229,58 +284,8 @@ while True:
 				if(current_spo2 > 0):
 					spo2_data = int(current_spo2)
 				packet = struct.pack(">ii", hr_data, spo2_data)
-				tx_sock.sendto(packet, ("172.20.10.10", TX_PORT))
+				tx_sock.sendto(packet, (PICO_IP, TX_PORT))
 				print(".............................Data sent: ", current_hr)
-	
-			# spo2_filtered = lowpass_filter(spo2, cutoff=0.4, fs=freq)
-			# heartrate_filtered = lowpass_filter(heartrate_list, cutoff=10, fs=freq)
-			# heartrate_convolved= np.convolve(heartrate_list, np.ones(5)/5, mode="same")
-			# current_hr = heartrate_convolved[len(heartrate_convolved) - 1]
-			
-			# plot_spectrum(filtered_red_AC, fs=freq)
-
-			# time axis
-			# t = np.arange(len(filtered_red_AC)) / freq
-			# t_o2 = t[window:] - (window / (2 * freq))
-
-			# plt.figure(figsize=(10, 6))
-
-			# AC component
-			# plt.plot(t, filtered_red_AC, label='Filtered Red Samples')
-			# plt.plot(t, np_red_AC, label='Red Samples')
-			# plt.plot(t, filtered_ir_AC, label='Filtered IR Samples')
-			# plt.plot(t, np_ir_AC, label='IR Samples')
-
-			# DC component
-			# plt.plot(t, np_red_DC, label='Red DC')
-			# plt.plot(t, np_ir_DC, label='IR DC')
-
-			# Ratio
-			# plt.plot(t, ratio_red, label='Red Ratio')
-			# plt.plot(t, ratio_ir, label='IR Ratio')
-			# plt.plot(t_R, ratio, label='ratio')
-
-			# SpO2 saturation
-			# plt.subplot(3, 1, 1)
-			# plt.plot(spo2_filtered, label='oxygen saturation')
-			# plt.title("Oxygen Saturation")
-			# plt.xlabel("time")
-			# plt.ylabel("%")
-
-			# plt.subplot(3, 1, 2)
-			# plt.plot(heartrate_filtered, label='heartrate')
-			# plt.title("Heart Rate (Lowpass Filter)")
-			# plt.xlabel("time")
-			# plt.ylabel("BPM")
-
-			# plt.subplot(3, 1, 3)
-			# plt.plot(heartrate_convolved, label='heartrate')
-			# plt.title("Heart Rate (Convolved)")
-			# plt.xlabel("time")
-			# plt.ylabel("BPM")
-
-			# plt.tight_layout()
-			# plt.show()
 
 			# update initial conditions for next batch
 			# if(current_hr > 0 and (((1/current_hr) - 0.5) > 0.5)):
