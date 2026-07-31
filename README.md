@@ -316,6 +316,9 @@ Circuit diagram updated for TFT Display:
 
 <img width="692" height="781" alt="image" src="https://github.com/user-attachments/assets/64a43bfd-4dba-4aaf-9357-f16ecd37edb8" />
 
-**Fixed value error bug**: Calculating heart rate after taking finger off sensor for too long results in value error being raised. SciPy find_peaks() expects distance >= 1, since freq = 1 / np.mean(dt) gets small when dt is too long, make sure freq >= 1 before passing into find_peaks().
+**Fixed value error bug**: calculating heart rate after taking finger off sensor for too long results in value error being raised. SciPy find_peaks() expects distance >= 1, since freq = 1 / np.mean(dt) gets small when dt is too long, make sure freq >= 1 before passing into find_peaks().
 
-Updated Pico code to ensure display_data() only gets called when new data is available.
+**Fixed value error bug**: make sure current_hr and current_spo2 are not NaN before casting to int.
+
+Updated Pico code to ensure display_data() only gets called when new data is available. Added function to create graphs of heart rate and SpO2. Added button (active low) to switch display between numerical values and graph, button debounce implemented in hardware.
+
