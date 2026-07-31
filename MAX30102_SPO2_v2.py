@@ -1,6 +1,6 @@
 # Author: Ember Ipek
 #
-# 7/29/2026
+# 7/30/2026
 #
 # This initializes an I2C bus for a MAX30102 sensor, puts it in SpO2 mode,
 # and gets a temperature reading every 0.5 seconds. Helper functions are
@@ -23,11 +23,12 @@ import math
 
 SPO2_SDA = machine.Pin(4)
 SPO2_SCL = machine.Pin(5)
+BUTTON1 = machine.Pin(6)
 
 UDP_IP = "172.20.10.3"
 TX_PORT = 5005
 RX_PORT = 5006
-
+MAX_LEN = 50
 
 ###################################################################
 # SpO2 class
@@ -302,16 +303,44 @@ class MAX30102:
         
         return
 
+#################################################################################
+# TFT display stuff
+#################################################################################
 
 def display_data(heartrate, spo2):
-    tft.fill(TFT.BLACK);
-    v = 60
+    tft.fill(TFT.BLACK)
+    v = 30
     heartrate_str = "HR: " + str(heartrate)
     spo2_str = "SpO2: " + str(spo2)
-    tft.text((0, v), heartrate_str, TFT.RED, sysfont, 2, nowrap=True)
+    # display heartrate and increment vertical alignment
+    tft.text((0, v), heartrate_str, TFT.YELLOW, sysfont, 2, nowrap=True)
+    if((heartrate > 150) or (heartrate < 50)):
+        tft.fillcircle((105, v + 5), 8, TFT.RED)
+    else:
+        tft.fillcircle((105, v + 5), 8, TFT.GREEN)
     v += sysfont["Height"] * 3
-    tft.text((0, v), spo2_str, TFT.YELLOW, sysfont, 2, nowrap=True)
+    
+    tft.text((0, v), spo2_str, TFT.CYAN, sysfont, 2, nowrap=True)
+    if(spo2 < 90):
+        tft.fillcircle((105, v + 5), 8, TFT.RED)
+    else:
+        tft.fillcircle((105, v + 5), 8, TFT.GREEN)
     v += sysfont["Height"] * 3
+
+def draw_graph(data, color, y_min, y_max, x0, y0, width, height):
+    if len(data) < 2:
+        return
+    
+    for i in range(len(data) - 1):
+        x1 = x0 + i * width // len(data)
+        x2 = x0 + (i + 1) * width // len(data)
+        
+        y1 = y0 + height - int(((data[i] - y_min) * height) / (y_max - y_min))
+        y2 = y0 + height - int(((data[i + 1] - y_min) * height) / (y_max - y_min))
+        
+        tft.line((x1, y1), (x2, y2), color)
+        
+    return
 
 #############################################################
 # init variables/objects
@@ -347,20 +376,42 @@ time.sleep_ms(1000)
 
 current_hr = 0
 current_spo2 = 0
+hr_history = []
+spo2_history = []
 
 while True:
     wlan = udp.maintain_wifi(wlan)
     
     # receive heartrate from packet
     count = 0
+    hr_received = 0
+    spo2_received = 0
     while(count<10):
         new_hr, new_spo2 = udp.receive_packet()
-        if(new_hr != None):
+        if(new_hr != None and new_hr != current_hr):
             current_hr = new_hr
-        if(new_spo2 != None):
+            if(len(hr_history) >= MAX_LEN):
+                hr_history.pop(0)
+            hr_history.append(current_hr)
+            hr_received = 1
+        if(new_spo2 != None and new_spo2 != current_spo2):
             current_spo2 = new_spo2
+            if(len(spo2_history) >= MAX_LEN):
+                spo2_history.pop(0)
+            spo2_history.append(current_hr)
+            spo2_received = 1
         count += 1
-        
+    
+    # display new data
+    if(hr_received or spo2_received):
+        display_data(current_hr, current_spo2)
+        #draw_graph(data, color, y_min, y_max, x0, y0, width, height)
+#         tft.fill(TFT.BLACK)
+#         draw_graph(hr_history, TFT.YELLOW, 40, 200, 0, 80, 128, 50)
+#         draw_graph(spo2_history, TFT.CYAN, 70, 100, 0, 40, 128, 10)
+    hr_received = 0
+    spo2_received = 0
+    
     # read the die temperature in Celsius
     temp_C = sensor.get_temp()
     red, ir = sensor.get_fifo_data()
@@ -371,15 +422,3 @@ while True:
 #     print("LED value red: ", red, ", IR: ", ir)
     packet = udp.pack_data(temp_C, red, ir)
     udp.send_data(packet)
-#     if wlan.isconnected():
-#         tx_sock.sendto(packet, (UDP_IP, TX_PORT))
-#         print("Packet sent! IP: ", wlan.ifconfig())
-        
-    new_hr, new_spo2 = udp.receive_packet()
-    if(new_hr != None):
-        current_hr = new_hr
-    if(new_spo2 != None):
-        current_spo2 = new_spo2
-            
-    # display on LED
-    display_data(current_hr, current_spo2)
