@@ -1,7 +1,6 @@
 # Overdose Prevention Wearable System
 
 ### Demo
-
 [![Watch the video](https://img.youtube.com/vi/QXaHzORPQiQ/hqdefault.jpg)](https://www.youtube.com/watch?v=QXaHzORPQiQ)
 
 ## Pilot Proposal
