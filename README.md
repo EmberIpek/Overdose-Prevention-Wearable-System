@@ -1,4 +1,9 @@
 # Overdose Prevention Wearable System
+
+## Demo
+
+[![Watch the video](https://img.youtube.com/vi/QXaHzORPQiQ/hqdefault.jpg)](https://www.youtube.com/watch?v=QXaHzORPQiQ)
+
 ## Pilot Proposal
 
 Individuals at high risk of overdose often experience prolonged respiratory depression long before help arrives. Studies indicate that individuals involved in the criminal justice system are significantly more likely to die of overdose than the general population [1], [2], with those on probation up to 15 times more likely to die of opioid-related overdose [2]. Additional risk factors identified for those on probation included age >45, prior positive drug screen result for opioids or cocaine, and prior placement in drug treatment programs [2]. This pilot proposal evaluates whether wearable devices that includes voluntary healthcare-managed heartrate monitor and oxygen saturation monitor combined with rapid outreach programs reliably reduce fatal overdoses in high-risk populations. The program prioritizes protection of healthcare data, early detection of overdose, and non-punitive medical response.
@@ -41,7 +46,6 @@ The MAX30102 is an optical sensor that measures heart rate and oxygen saturation
 As the heart beats, it pushes blood into the capillaries. This localized increase in blood volume absorbs more light. Between beats, less blood is present, allowing more light to bounce back to the sensor. The peaks of the resulting sinusoidal waveform are measured to determine the frequency of pulses and obtain heart rate.
 
 Oxygenated and deoxygenated blood absorb different ratios of red and IR light: oxygenated blood absorbs more infrared light, and deoxygenated blood absorbs more red light. The sensor alternates with shining the red and IR LEDs, and measures the absorption ratio of both wavelengths. By comparing the ratio of red and IR light absorbed by the photodetector, the sensor estimates the percentage of oxygenated blood in the blood vessels.
-
 
 ## Circuit Diagram
 
@@ -322,3 +326,4 @@ Circuit diagram updated for TFT Display:
 
 Updated Pico code to ensure display_data() only gets called when new data is available. Added function to create graphs of heart rate and SpO2. Added button (active low) to switch display between numerical values and graph, button debounce implemented in hardware.
 
+[![Watch the video](https://img.youtube.com/vi/QXaHzORPQiQ/hqdefault.jpg)](https://www.youtube.com/watch?v=QXaHzORPQiQ)
