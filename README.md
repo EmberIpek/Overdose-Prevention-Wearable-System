@@ -309,3 +309,13 @@ Obtained ST7735 display screen, communicates through SPI. Used boochow’s ST773
 **ST7735 Display Driver**: Written by [boochow]( https://github.com/boochow/MicroPython-ST7735/blob/master/ST7735.py). 
 
 **System Font Driver**: Adapted from [cheungbx](https://github.com/cheungbx/st7735-esp8266-micropython/blob/master/sysfont.py).
+
+### 7/31/2026
+
+Circuit diagram updated for TFT Display:
+
+<img width="692" height="781" alt="image" src="https://github.com/user-attachments/assets/64a43bfd-4dba-4aaf-9357-f16ecd37edb8" />
+
+**Fixed value error bug**: Calculating heart rate after taking finger off sensor for too long results in value error being raised. SciPy find_peaks() expects distance >= 1, since freq = 1 / np.mean(dt) gets small when dt is too long, make sure freq >= 1 before passing into find_peaks().
+
+Updated Pico code to ensure display_data() only gets called when new data is available.
