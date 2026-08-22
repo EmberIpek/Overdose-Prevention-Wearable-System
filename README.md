@@ -326,3 +326,9 @@ Circuit diagram updated for TFT Display:
 Updated Pico code to ensure display_data() only gets called when new data is available. Added function to create graphs of heart rate and SpO2. Added button (active low) to switch display between numerical values and graph, button debounce implemented in hardware.
 
 [![Watch the video](https://img.youtube.com/vi/QXaHzORPQiQ/hqdefault.jpg)](https://www.youtube.com/watch?v=QXaHzORPQiQ)
+
+### 8/22/2026
+
+Changed time tracking from received time to sent time from controller to more accurately calculate sampling period and improve heart rate calculation. Peak detection modified to cap peak height to ignore movement artifacts.
+
+To do: clear arrays and recalculate biometrics if sampling period is too high.
